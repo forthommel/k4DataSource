@@ -2,11 +2,22 @@
 #define k4DataSource_k4DataSource_h
 
 #include <memory>
+#include <unordered_map>
 
 #include "ROOT/RDataFrame.hxx"
 #include "ROOT/RDataSource.hxx"
 
 class k4DataSourceIndex {};
+
+class k4DataSourceItem {
+public:
+  explicit k4DataSourceItem(const std::string& name) : name_(name) {}
+
+  const std::string& name() const { return name_; }
+
+private:
+  const std::string name_;
+};
 
 class k4DataSource final : public ROOT::RDF::RDataSource {
 public:
@@ -30,6 +41,7 @@ private:
 
   RDataSource* source_{nullptr};
   std::vector<std::string> column_names_;
+  std::unordered_map<std::string, k4DataSourceItem*> column_types_;
 };
 
 #endif

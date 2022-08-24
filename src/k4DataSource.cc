@@ -27,4 +27,9 @@ bool k4DataSource::HasColumn(std::string_view col_name) const {
   return false;
 }
 
-std::string k4DataSource::GetTypeName(std::string_view type) const { return ""; }
+std::string k4DataSource::GetTypeName(std::string_view type) const {
+  for (const auto& col : column_types_)
+    if (col.first == type)
+      return col.second->name();
+  return "";
+}
