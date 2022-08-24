@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.16.9)
 
 project(k4DataSource CXX)
 
+include(CTest)
+
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "RPATH USE LINK PATH")
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/install" CACHE PATH "default install path" FORCE)
@@ -35,4 +38,9 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libk4DataSource.rootmap"
 if(${ROOT_VERSION} GREATER 6)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libk4DataSource_rdict.pcm"
           DESTINATION "${INSTALL_LIB_DIR}")
+endif()
+
+if(BUILD_TESTING)
+  include(CatchInclude)
+  add_subdirectory(test)
 endif()
