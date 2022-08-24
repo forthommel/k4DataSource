@@ -1,9 +1,8 @@
+#include <ROOT/RRawFile.hxx>
+
 #include "k4DataSource/k4DataSource.h"
 
-k4DataSource::k4DataSource(std::unique_ptr<RDataSource> source) : source_(source.get()) {
-  for (const auto& col : source->GetColumnNames())
-    column_names_.emplace_back(col);
-}
+k4DataSource::k4DataSource(std::string_view source) : source_(TFile::Open(source.data())) {}
 
 std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::GetEntryRanges() { return {}; }
 
@@ -30,6 +29,6 @@ bool k4DataSource::HasColumn(std::string_view col_name) const {
 std::string k4DataSource::GetTypeName(std::string_view type) const {
   for (const auto& col : column_types_)
     if (col.first == type)
-      return col.second->name();
+      return col.second.name();
   return "";
 }

@@ -11,21 +11,27 @@ class k4DataSourceIndex {};
 
 class k4DataSourceItem {
 public:
-  explicit k4DataSourceItem(const std::string& name) : name_(name) {}
+  explicit k4DataSourceItem(const std::string& name, void* obj = nullptr) : name_(name), object_(obj) {}
 
   const std::string& name() const { return name_; }
+  template <typename T>
+  const T* get() const {
+    return dynamic_cast<const T*>(object_);
+  }
 
 private:
   const std::string name_;
+  void* object_;
 };
 
 class k4DataSource final : public ROOT::RDF::RDataSource {
 public:
-  explicit k4DataSource(std::unique_ptr<RDataSource>);
+  explicit k4DataSource(std::string_view);
 
   template <typename T>
-  k4DataSource& addSource(const T&, const std::string& source) {
+  k4DataSource& addSource(const std::string& source) {
     column_names_.emplace_back(source);
+    column_types_.insert(std::make_pair(source, k4DataSourceItem(source, new T())));
     return *this;
   }
 
@@ -39,9 +45,9 @@ public:
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;
 
-  RDataSource* source_{nullptr};
+  std::unique_ptr<TFile> source_;
   std::vector<std::string> column_names_;
-  std::unordered_map<std::string, k4DataSourceItem*> column_types_;
+  std::unordered_map<std::string, k4DataSourceItem> column_types_;
 };
 
 #endif
