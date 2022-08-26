@@ -1,8 +1,15 @@
-#include <ROOT/RRawFile.hxx>
-
+//#include "edm4hep/ReconstructedParticleData.h"
+#include "k4DataSource/k4DataConverters.h"
 #include "k4DataSource/k4DataSource.h"
 
-k4DataSource::k4DataSource(std::string_view source) : source_(TFile::Open(source.data())) {}
+k4DataSource::k4DataSource(std::string_view source, std::string_view filename)
+    : source_(new ROOT::RDataFrame(source, filename)) {
+  //addSource<edm4hep::ReconstructedParticleData>("ReconstructedParticles", {});
+  for (const auto& nm : source_->GetColumnNames())
+    std::cout << ">>>> " << nm << std::endl;
+  for (const auto& conv : k4DataConverters::get().converters())
+    std::cout << "... " << conv << std::endl;
+}
 
 std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::GetEntryRanges() { return {}; }
 
@@ -31,4 +38,8 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
     if (col.first == type)
       return col.second.name();
   return "";
+}
+
+ROOT::RDataFrame ROOT::Experimental::MakeK4DataFrame(std::string_view ntuple_name, std::string_view file_name) {
+  return ROOT::RDataFrame(std::make_unique<k4DataSource>(ntuple_name, file_name));
 }

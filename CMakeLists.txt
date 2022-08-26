@@ -16,6 +16,7 @@ set(INSTALL_INCLUDE_DIR include CACHE PATH
   "Installation directory for header files")
 
 find_package(ROOT COMPONENTS ROOTVecOps ROOTDataFrame REQUIRED)
+find_package(EDM4HEP REQUIRED)
 
 file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${CMAKE_SOURCE_DIR}/k4DataSource/*.h)
@@ -25,9 +26,15 @@ file(GLOB reflex_sel ${CMAKE_SOURCE_DIR}/src/classes_def.xml)
 set(CMAKE_ROOTTEST_NOROOTMAP OFF)
 reflex_generate_dictionary(libk4DataSource ${headers} ${reflex_cl} SELECTION ${reflex_sel})
 
+set(DATA_FORMATS)
+add_subdirectory(DataFormats)
+message(STATUS ${DATA_FORMATS})
+
 add_library(k4DataSource SHARED ${sources} ${headers} libk4DataSource.cxx)
 target_include_directories(k4DataSource PUBLIC ${CMAKE_SOURCE_DIR})
-target_link_libraries(k4DataSource ROOT::ROOTDataFrame)
+target_link_libraries(k4DataSource ${DATA_FORMATS}
+                                   ROOT::ROOTDataFrame
+                                   EDM4HEP::edm4hep EDM4HEP::edm4hepDict)
 set_target_properties(k4DataSource PROPERTIES PUBLIC_HEADER "${headers}")
 install(TARGETS k4DataSource
         RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin

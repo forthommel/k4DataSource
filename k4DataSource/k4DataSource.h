@@ -26,7 +26,7 @@ private:
 
 class k4DataSource final : public ROOT::RDF::RDataSource {
 public:
-  explicit k4DataSource(std::string_view);
+  explicit k4DataSource(std::string_view, std::string_view);
 
   template <typename T>
   k4DataSource& addSource(const std::string& source) {
@@ -45,9 +45,13 @@ public:
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;
 
-  std::unique_ptr<TFile> source_;
+  std::unique_ptr<ROOT::RDataFrame> source_;
   std::vector<std::string> column_names_;
   std::unordered_map<std::string, k4DataSourceItem> column_types_;
 };
+
+namespace ROOT::Experimental {
+  ROOT::RDataFrame MakeK4DataFrame(std::string_view ntuple_name, std::string_view file_name);
+}
 
 #endif
