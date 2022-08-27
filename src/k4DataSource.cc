@@ -2,13 +2,26 @@
 #include "k4DataSource/k4DataConverters.h"
 #include "k4DataSource/k4DataSource.h"
 
-k4DataSource::k4DataSource(std::string_view source, std::string_view filename)
+k4DataSource::k4DataSource(std::string_view source,
+                           std::string_view filename,
+                           const std::vector<std::string>& columns_list)
     : source_(new ROOT::RDataFrame(source, filename)) {
   //addSource<edm4hep::ReconstructedParticleData>("ReconstructedParticles", {});
   for (const auto& nm : source_->GetColumnNames())
     std::cout << ">>>> " << nm << std::endl;
   for (const auto& conv : k4DataConverters::get().converters())
     std::cout << "... " << conv << std::endl;
+
+  for (const auto& col : columns_list) {
+    addSource(col, std::move(k4DataConverters::get().build(col)));
+  }
+}
+
+k4DataSource& k4DataSource::addSource(const std::string& source, std::unique_ptr<DataFormatter> converter) {
+  column_names_.emplace_back(source);
+  column_types_.insert(std::make_pair(source, k4DataSourceItem(source, std::move(converter))));
+  column_types_.at(source).apply(*source_);
+  return *this;
 }
 
 std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::GetEntryRanges() { return {}; }

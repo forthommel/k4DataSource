@@ -6,34 +6,26 @@
 
 #include "ROOT/RDataFrame.hxx"
 #include "ROOT/RDataSource.hxx"
-
-class k4DataSourceIndex {};
+#include "k4DataSource/DataFormatter.h"
 
 class k4DataSourceItem {
 public:
-  explicit k4DataSourceItem(const std::string& name, void* obj = nullptr) : name_(name), object_(obj) {}
+  explicit k4DataSourceItem(const std::string& name, std::unique_ptr<DataFormatter> converter)
+      : name_(name), converter_(std::move(converter)) {}
 
   const std::string& name() const { return name_; }
-  template <typename T>
-  const T* get() const {
-    return dynamic_cast<const T*>(object_);
-  }
+  void apply(ROOT::RDataFrame& rdf) { converter_->convert(rdf); }
 
 private:
   const std::string name_;
-  void* object_;
+  std::unique_ptr<DataFormatter> converter_;
 };
 
 class k4DataSource final : public ROOT::RDF::RDataSource {
 public:
-  explicit k4DataSource(std::string_view, std::string_view);
+  explicit k4DataSource(std::string_view, std::string_view, const std::vector<std::string>& = {});
 
-  template <typename T>
-  k4DataSource& addSource(const std::string& source) {
-    column_names_.emplace_back(source);
-    column_types_.insert(std::make_pair(source, k4DataSourceItem(source, new T())));
-    return *this;
-  }
+  k4DataSource& addSource(const std::string&, std::unique_ptr<DataFormatter>);
 
   const std::vector<std::string>& GetColumnNames() const override { return column_names_; }
   std::vector<std::pair<unsigned long long, unsigned long long> > GetEntryRanges() override;

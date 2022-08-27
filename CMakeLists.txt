@@ -26,6 +26,8 @@ file(GLOB reflex_sel ${CMAKE_SOURCE_DIR}/src/classes_def.xml)
 set(CMAKE_ROOTTEST_NOROOTMAP OFF)
 reflex_generate_dictionary(libk4DataSource ${headers} ${reflex_cl} SELECTION ${reflex_sel})
 
+include_directories(${CMAKE_SOURCE_DIR})
+
 set(DATA_FORMATS)
 add_subdirectory(DataFormats)
 message(STATUS ${DATA_FORMATS})
