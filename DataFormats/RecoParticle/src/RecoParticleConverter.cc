@@ -1,26 +1,24 @@
 #include <edm4hep/ReconstructedParticleData.h>
 
-#include <ROOT/RDataFrame.hxx>
-#include <ROOT/RVec.hxx>
 
 #include "DataFormats/RecoParticle/include/RecoParticle.h"
 #include "k4DataSource/DataFormatter.h"
 #include "k4DataSource/k4DataConverters.h"
 
-namespace rv = ROOT::VecOps;
-
 class RecoParticlesConverter : public DataFormatter {
 public:
-  RecoParticlesConverter() : DataFormatter({"ReconstructedParticles"}, {"RecoParticles"}) {}
+  RecoParticlesConverter() : DataFormatter({"ReconstructedParticles"}, {"RecoParticle"}) {}
 
-  std::vector<void*> convert(std::vector<void*> input) override {
-    if (input.size() != cols_in_.size())
-      throw std::runtime_error("Invalid inputs multiplicity: " + std::to_string(input.size()) +
-                               " != " + std::to_string(cols_in_.size()) + "!");
-    auto part = *(edm4hep::ReconstructedParticleData*)input.at(0);
-    std::vector<void*> out;
-    out.emplace_back((void*)new RecoParticle(part.momentum.x, part.momentum.y, part.momentum.z, part.energy));
-    return out;
+  std::vector<void*> convert() override {
+    //std::vector<edm4hep::ReconstructedParticleData> parts;
+    //auto* parts = dynamic_cast<std::vector<edm4hep::ReconstructedParticleData>*>(input.at(0));
+    auto* parts = reinterpret_cast<std::vector<edm4hep::ReconstructedParticleData>*>(input_data_.at(0));
+    //auto* parts = (std::vector<edm4hep::ReconstructedParticleData>*)(input.at(0));
+    //auto parts = *(edm4hep::ReconstructedParticleData*)(input.at(0));
+    auto output = new std::vector<RecoParticle>();
+    //for (const auto& part : *parts)
+    //  output->emplace_back(part.momentum.x, part.momentum.y, part.momentum.z, part.energy);
+    return {(void*)output};
   }
 };
 

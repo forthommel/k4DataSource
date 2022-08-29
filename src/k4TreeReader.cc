@@ -15,9 +15,8 @@ k4TreeReader::k4TreeReader(const std::string& source, const std::vector<std::str
     TClass::GetClass(type_name.data());  // just in case supporting library is not yet loaded
     branch_names_.emplace_back(branch_name);
     branches_[branch_name] = BranchInfo{branch_name, type_name, {}};
-    std::cout << ">>>> " << branch_name << " ::: " << type_name << std::endl;
   }
-  std::cout << __PRETTY_FUNCTION__ << " >>> initialised!" << std::endl;
+  num_entries_ = chain_model.GetEntries();
 }
 
 bool k4TreeReader::has(const std::string& name) const { return branches_.count(name) > 0; }
@@ -28,37 +27,48 @@ const std::string& k4TreeReader::typeName(const std::string& name) const {
   return branches_.at(name).type;
 }
 
-void k4TreeReader::setNumSlots(size_t num_slot) {
+void k4TreeReader::setNumSlots(size_t num_slots) {
+  num_slots = std::max(num_slots, size_t{1});
   for (auto& bi : branches_)
-    bi.second.addresses = std::vector<void*>(num_slot, nullptr);
-  chains_.resize(num_slot);
-}
-
-void k4TreeReader::init() {}
-
-void k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
-  auto chain = std::make_unique<TChain>(source_.data());
-  chain->ResetBit(kMustCleanup);
-  for (const auto& filename : filenames_)
-    chain->Add(filename.data());
-  for (auto& bi : branches_) {
-    auto& branch_info = bi.second;
-    auto& addr = branch_info.addresses[slot];
-    const auto type_class = TClass::GetClass(typeName(branch_info.name).data());
-    if (type_class)
-      chain->SetBranchAddress(branch_info.name.data(), &addr, nullptr, type_class, EDataType(0), true);
-    else {
-      if (!addr) {
-        addr = new double();
-        //fAddressesToFree.emplace_back((double*)addr);
+    bi.second.addresses = std::vector<void*>(num_slots, nullptr);
+  for (size_t i = 0; i < num_slots; ++i) {
+    auto chain = std::make_unique<TChain>(source_.data());
+    chain->ResetBit(kMustCleanup);
+    for (const auto& filename : filenames_)
+      chain->Add(filename.data());
+    for (auto& bi : branches_) {
+      auto& branch_info = bi.second;
+      auto& addr = branch_info.addresses[i];
+      const auto type_class = TClass::GetClass(typeName(branch_info.name).data());
+      if (type_class)
+        chain->SetBranchAddress(branch_info.name.data(), &addr, nullptr, type_class, EDataType(0), true);
+      else {
+        if (!addr) {
+          dangling_ptrs_.emplace_back(std::make_unique<double>());
+          addr = dangling_ptrs_.rbegin()->get();
+        }
+        chain->SetBranchAddress(branch_info.name.data(), addr);
       }
-      chain->SetBranchAddress(branch_info.name.data(), addr);
     }
+    chain->AddBranchToCache("*", true);
+    chains_.emplace_back(std::move(chain));
+    ranges_.resize(num_slots);
   }
-  chain->AddBranchToCache("*", true);
-  chain->GetEntry(entry);
-  chains_[slot] = std::move(chain);
 }
+
+void k4TreeReader::init() {
+  const auto num_slots = ranges_.size();
+  const auto expected_size = num_entries_ / num_slots,
+             remaining = num_entries_ % num_slots;  // last remaining events after splitting
+  for (size_t i = 0; i < num_slots; ++i)
+    ranges_.emplace_back(std::make_pair(
+        i * expected_size,                            // beginning of range
+        (i + 1) * expected_size                       // end of range
+            + (i < num_slots - 1 ? 0ull : remaining)  // last bit gets the remaining events
+        ));
+}
+
+bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) { return chains_.at(slot)->GetEntry(entry) > 0; }
 
 std::vector<void*> k4TreeReader::read(const std::string& name, const std::type_info& tid) {
   const auto& type = typeName(name);  // possibly throws

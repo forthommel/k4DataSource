@@ -18,12 +18,14 @@ public:
   /// Initialise the readout of branches
   /// \param[in] slot unique slot identifier
   /// \param[in] entry event identifier
-  void initEntry(size_t slot, unsigned long long entry);
+  bool initEntry(size_t slot, unsigned long long entry);
+  inline const std::vector<std::pair<unsigned long long, unsigned long long> >& ranges() const { return ranges_; }
   std::vector<void*> read(const std::string&, const std::type_info&);
 
 private:
   const std::string source_{};
   const std::vector<std::string> filenames_{};
+  unsigned long long num_entries_{0ull};
 
   /// Metadata and memory accessor for all branches
   struct BranchInfo {
@@ -35,7 +37,10 @@ private:
   std::vector<std::string> branch_names_;
   std::unordered_map<std::string, BranchInfo> branches_;
 
-  std::vector<std::unique_ptr<TChain> > chains_;  // one chain per slot
+  std::vector<std::unique_ptr<TChain> > chains_;                            // one chain per slot
+  std::vector<std::pair<unsigned long long, unsigned long long> > ranges_;  // one range per slot
+
+  std::vector<std::unique_ptr<double> > dangling_ptrs_;
 };
 
 #endif

@@ -14,7 +14,12 @@ public:
       : name_(name), converter_(std::move(converter)) {}
 
   const std::string& name() const { return name_; }
-  std::vector<void*> apply(const std::vector<void*>& input) { return converter_->convert(input); }
+  const std::vector<std::string>& inputs() const { return converter_->inputs(); }
+  const std::vector<std::string>& outputs() const { return converter_->outputs(); }
+  std::vector<void*> apply(const std::vector<void*>& input) {
+    converter_->feed(input);
+    return converter_->convert();
+  }
 
 private:
   const std::string name_;
@@ -38,7 +43,9 @@ public:
 
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;
+  std::vector<void*> readBranch(const std::string&, const std::type_info&);
 
+  size_t num_slots_{1};
   std::vector<std::unique_ptr<k4TreeReader> > readers_;
 
   // output source-oriented information
