@@ -1,14 +1,12 @@
-//#include "edm4hep/ReconstructedParticleData.h"
+#include <iostream>
+
 #include "k4DataSource/k4DataConverters.h"
 #include "k4DataSource/k4DataSource.h"
 
-k4DataSource::k4DataSource(std::string_view source,
-                           std::string_view filename,
-                           const std::vector<std::string>& columns_list)
-    : source_(new ROOT::RDataFrame(source, filename)) {
-  //addSource<edm4hep::ReconstructedParticleData>("ReconstructedParticles", {});
-  for (const auto& nm : source_->GetColumnNames())
-    std::cout << ">>>> " << nm << std::endl;
+k4DataSource::k4DataSource(std::string_view tree_name,
+                           const std::vector<std::string>& filenames,
+                           const std::vector<std::string>& columns_list) {
+  readers_.emplace_back(std::make_unique<k4TreeReader>(std::string(tree_name), filenames));
   for (const auto& conv : k4DataConverters::get().converters())
     std::cout << "... " << conv << std::endl;
 
@@ -16,30 +14,43 @@ k4DataSource::k4DataSource(std::string_view source,
     addSource(col, std::move(k4DataConverters::get().build(col)));
     std::cout << ">>> added " << col << std::endl;
   }
-  for (const auto& nm : source_->GetColumnNames())
-    std::cout << "new>>>> " << nm << std::endl;
+  //for (const auto& nm : source_->GetColumnNames())
+  //  std::cout << "new>>>> " << nm << std::endl;
 }
 
 k4DataSource& k4DataSource::addSource(const std::string& source, std::unique_ptr<DataFormatter> converter) {
   column_names_.emplace_back(source);
   column_types_.insert(std::make_pair(source, k4DataSourceItem(source, std::move(converter))));
-  column_types_.at(source).apply(*source_);
+  //column_types_.at(source).apply(*source_);
   return *this;
 }
 
 std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::GetEntryRanges() { return {}; }
 
+void k4DataSource::Initialise() {
+  for (auto& reader : readers_)
+    reader->init();
+}
+
 bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
-  (void)slot;
-  (void)entry;
+  for (auto& reader : readers_)
+    reader->initEntry(slot, entry);
   return true;
 }
 
-void k4DataSource::SetNSlots(unsigned int nSlots) { (void)nSlots; }
+void k4DataSource::SetNSlots(unsigned int nSlots) {
+  for (auto& reader : readers_)
+    reader->setNumSlots(nSlots);
+}
 
-k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name, const std::type_info&) {
-  (void)name;
-  return Record_t{};
+k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name, const std::type_info& tid) {
+  const std::string br_name(name);
+  for (auto& reader : readers_) {
+    const auto& branches = reader->branches();
+    if (std::find(branches.begin(), branches.end(), br_name) != branches.end())
+      return reader->read(br_name, tid);
+  }
+  throw std::runtime_error("Failed to retrieve branch name '" + br_name + "' from readers!");
 }
 
 bool k4DataSource::HasColumn(std::string_view col_name) const {
@@ -57,7 +68,7 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
 }
 
 ROOT::RDataFrame ROOT::Experimental::MakeK4DataFrame(std::string_view ntuple_name,
-                                                     std::string_view file_name,
+                                                     const std::vector<std::string>& file_names,
                                                      const std::vector<std::string>& column_names) {
-  return ROOT::RDataFrame(std::make_unique<k4DataSource>(ntuple_name, file_name, column_names));
+  return ROOT::RDataFrame(std::make_unique<k4DataSource>(ntuple_name, file_names, column_names));
 }
