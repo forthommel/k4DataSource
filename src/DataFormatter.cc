@@ -3,7 +3,9 @@
 #include "k4DataSource/DataFormatter.h"
 
 DataFormatter::DataFormatter(const std::vector<std::string>& columns_in, const std::vector<std::string>& columns_out)
-    : cols_in_(columns_in), cols_out_(columns_out) {}
+    : cols_in_(columns_in), cols_out_(columns_out) {
+  input_data_.resize(cols_in_.size());
+}
 
 void DataFormatter::feed(const std::vector<void*>& input) {
   if (input.size() != cols_in_.size())

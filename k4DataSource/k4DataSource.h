@@ -5,26 +5,8 @@
 #include <ROOT/RDataSource.hxx>
 #include <unordered_map>
 
-#include "k4DataSource/DataFormatter.h"
+#include "k4DataSource/k4DataSourceItem.h"
 #include "k4DataSource/k4TreeReader.h"
-
-class k4DataSourceItem {
-public:
-  explicit k4DataSourceItem(const std::string& name, std::unique_ptr<DataFormatter> converter)
-      : name_(name), converter_(std::move(converter)) {}
-
-  const std::string& name() const { return name_; }
-  const std::vector<std::string>& inputs() const { return converter_->inputs(); }
-  const std::vector<std::string>& outputs() const { return converter_->outputs(); }
-  std::vector<void*> apply(const std::vector<void*>& input) {
-    converter_->feed(input);
-    return converter_->convert();
-  }
-
-private:
-  const std::string name_;
-  std::unique_ptr<DataFormatter> converter_;
-};
 
 /// A ROOT RDataSource-derived high level reader
 class k4DataSource final : public ROOT::RDF::RDataSource {
