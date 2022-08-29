@@ -1,3 +1,11 @@
 <lcgdict>
   <class name="k4DataSource"/>
+  <class name="std::vector<edm4hep::ClusterData>"/>
+  <class name="std::vector<edm4hep::MCParticleData>"/>
+  <class name="std::vector<edm4hep::MCRecoParticleAssociationData>"/>
+  <class name="std::vector<edm4hep::ParticleIDData>"/>
+  <class name="std::vector<edm4hep::ReconstructedParticleData>"/>
+  <class name="std::vector<edm4hep::RecoParticleRefData>"/>
+  <class name="std::vector<edm4hep::TrackData>"/>
+  <class name="std::vector<edm4hep::TrackState>"/>
 </lcgdict>
