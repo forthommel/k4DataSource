@@ -13,14 +13,14 @@ class RecoParticlesConverter : public DataFormatter {
 public:
   RecoParticlesConverter() : DataFormatter({"ReconstructedParticles"}, {"RecoParticles"}) {}
 
-  void convert(ROOT::RDataFrame& rdf) override {
-    auto convert_particles = [](rv::RVec<edm4hep::ReconstructedParticleData> parts) {
-      rv::RVec<RecoParticle> out;
-      for (const auto& part : parts)
-        out.emplace_back(part.momentum.x, part.momentum.y, part.momentum.z, part.energy);
-      return out;
-    };
-    rdf.Define("RecoParticles", convert_particles, {"ReconstructedParticles"});
+  std::vector<void*> convert(std::vector<void*> input) override {
+    if (input.size() != cols_in_.size())
+      throw std::runtime_error("Invalid inputs multiplicity: " + std::to_string(input.size()) +
+                               " != " + std::to_string(cols_in_.size()) + "!");
+    auto part = *(edm4hep::ReconstructedParticleData*)input.at(0);
+    std::vector<void*> out;
+    out.emplace_back((void*)new RecoParticle(part.momentum.x, part.momentum.y, part.momentum.z, part.energy));
+    return out;
   }
 };
 

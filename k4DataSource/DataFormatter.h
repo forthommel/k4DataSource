@@ -15,7 +15,7 @@ public:
       : cols_in_(columns_in), cols_out_(columns_out) {}
   virtual ~DataFormatter() = default;
 
-  virtual void convert(ROOT::RDataFrame&) = 0;
+  virtual std::vector<void*> convert(std::vector<void*>) = 0;
 
 protected:
   const std::vector<std::string> cols_in_;

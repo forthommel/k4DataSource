@@ -10,18 +10,15 @@ k4DataSource::k4DataSource(std::string_view tree_name,
   for (const auto& conv : k4DataConverters::get().converters())
     std::cout << "... " << conv << std::endl;
 
-  for (const auto& col : columns_list) {
-    addSource(col, std::move(k4DataConverters::get().build(col)));
-    std::cout << ">>> added " << col << std::endl;
-  }
-  //for (const auto& nm : source_->GetColumnNames())
-  //  std::cout << "new>>>> " << nm << std::endl;
+  for (const auto& col : columns_list)
+    addSource(col);
 }
 
-k4DataSource& k4DataSource::addSource(const std::string& source, std::unique_ptr<DataFormatter> converter) {
+k4DataSource& k4DataSource::addSource(const std::string& source) {
+  auto converter = k4DataConverters::get().build(source);
   column_names_.emplace_back(source);
   column_types_.insert(std::make_pair(source, k4DataSourceItem(source, std::move(converter))));
-  //column_types_.at(source).apply(*source_);
+  std::cout << ">>> added " << source << std::endl;
   return *this;
 }
 
@@ -50,6 +47,7 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
     if (std::find(branches.begin(), branches.end(), br_name) != branches.end())
       return reader->read(br_name, tid);
   }
+  //column_types_.at(source).apply(*source_);
   throw std::runtime_error("Failed to retrieve branch name '" + br_name + "' from readers!");
 }
 

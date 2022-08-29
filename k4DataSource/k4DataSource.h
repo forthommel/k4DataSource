@@ -14,7 +14,7 @@ public:
       : name_(name), converter_(std::move(converter)) {}
 
   const std::string& name() const { return name_; }
-  void apply(ROOT::RDataFrame& rdf) { converter_->convert(rdf); }
+  std::vector<void*> apply(const std::vector<void*>& input) { return converter_->convert(input); }
 
 private:
   const std::string name_;
@@ -26,7 +26,7 @@ class k4DataSource final : public ROOT::RDF::RDataSource {
 public:
   explicit k4DataSource(std::string_view, const std::vector<std::string>&, const std::vector<std::string>& = {});
 
-  k4DataSource& addSource(const std::string&, std::unique_ptr<DataFormatter>);
+  k4DataSource& addSource(const std::string&);
 
   const std::vector<std::string>& GetColumnNames() const override { return column_names_; }
   std::vector<std::pair<unsigned long long, unsigned long long> > GetEntryRanges() override;
