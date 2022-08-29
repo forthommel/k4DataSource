@@ -43,7 +43,9 @@ private:
 };
 
 namespace ROOT::Experimental {
-  ROOT::RDataFrame MakeK4DataFrame(std::string_view ntuple_name, std::string_view file_name);
+  ROOT::RDataFrame MakeK4DataFrame(std::string_view ntuple_name,
+                                   std::string_view file_namei,
+                                   const std::vector<std::string>& = {});
 }
 
 #endif

@@ -14,7 +14,10 @@ k4DataSource::k4DataSource(std::string_view source,
 
   for (const auto& col : columns_list) {
     addSource(col, std::move(k4DataConverters::get().build(col)));
+    std::cout << ">>> added " << col << std::endl;
   }
+  for (const auto& nm : source_->GetColumnNames())
+    std::cout << "new>>>> " << nm << std::endl;
 }
 
 k4DataSource& k4DataSource::addSource(const std::string& source, std::unique_ptr<DataFormatter> converter) {
@@ -53,6 +56,8 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
   return "";
 }
 
-ROOT::RDataFrame ROOT::Experimental::MakeK4DataFrame(std::string_view ntuple_name, std::string_view file_name) {
-  return ROOT::RDataFrame(std::make_unique<k4DataSource>(ntuple_name, file_name));
+ROOT::RDataFrame ROOT::Experimental::MakeK4DataFrame(std::string_view ntuple_name,
+                                                     std::string_view file_name,
+                                                     const std::vector<std::string>& column_names) {
+  return ROOT::RDataFrame(std::make_unique<k4DataSource>(ntuple_name, file_name, column_names));
 }
