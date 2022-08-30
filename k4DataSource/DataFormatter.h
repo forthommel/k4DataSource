@@ -7,20 +7,14 @@
 #include <unordered_map>
 #include <vector>
 
-namespace ROOT {
-  class RDataFrame;
-}
-
+/// A base algorithm for the production of event collections
 class DataFormatter {
 public:
-  explicit DataFormatter(const std::vector<std::string>& columns_out = {});
+  DataFormatter() = default;
   virtual ~DataFormatter() = default;
 
-  const std::vector<std::string>& inputs() const { return cols_in_; }
-  const std::vector<std::string>& outputs() const { return cols_out_; }
-
-  void feed(const std::vector<void*>& input);
-  std::vector<void*> extract() const;
+  /// User-defined collection building
+  virtual void convert() = 0;
 
   /// A collection translation unit
   template <typename T>
@@ -38,6 +32,11 @@ public:
     void* ptr_;
   };
 
+  /// Feed the algorithm a set of input values
+  void feed(const std::vector<void*>&);
+  /// Extract all collections produced by the algorithm
+  std::vector<void*> extract() const;
+
   /// Declare an input collection to be consumed by the algorithm
   template <typename T>
   Handle<T> consumes(const std::string& label) {
@@ -46,7 +45,10 @@ public:
     input_size_[label] = sizeof(T);
     return static_cast<T*>(input_data_[label]);
   }
+  /// Retrieve a list of input collections consumed by this module
+  const std::vector<std::string>& inputs() const { return cols_in_; }
 
+  /// Declare an output collection to be produced by the algorithm
   template <typename T>
   void produces(const std::string& label) {
     cols_out_.emplace_back(label);
@@ -54,14 +56,15 @@ public:
     output_size_[label] = sizeof(T);
     output_type_[label] = typeid(T).hash_code();
   }
+  /// Retrieve a list of output collections provided by this module
+  const std::vector<std::string>& outputs() const { return cols_out_; }
 
-  virtual void convert() = 0;
-
+  /// Put the collection onto the event
   template <typename T>
   void put(std::unique_ptr<T> coll, const std::string& label = "") {
     put(coll.get(), label);
   }
-
+  /// Put the collection onto the event
   template <typename T>
   void put(const T* coll, const std::string& label = "") {
     void* ptr{nullptr};
