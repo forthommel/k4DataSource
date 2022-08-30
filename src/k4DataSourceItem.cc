@@ -10,5 +10,6 @@ const std::vector<std::string>& k4DataSourceItem::outputs() const { return conve
 
 std::vector<void*> k4DataSourceItem::apply(const std::vector<void*>& input) {
   converter_->feed(input);
-  return converter_->convert();
+  converter_->convert();
+  return converter_->extract();
 }

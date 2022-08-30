@@ -1,4 +1,4 @@
-#include <iostream>
+#include <edm4hep/ReconstructedParticleData.h>
 
 #include "k4DataSource/k4DataConverters.h"
 #include "k4DataSource/k4DataSource.h"
@@ -24,6 +24,14 @@ k4DataSource& k4DataSource::addSource(const std::string& source) {
   return *this;
 }
 
+void k4DataSource::SetNSlots(unsigned int nSlots) {
+  for (auto& reader : readers_)
+    reader->setNumSlots(nSlots);
+  num_slots_ = nSlots;
+}
+
+void k4DataSource::Initialise() {}
+
 std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::GetEntryRanges() {
   std::cout << __PRETTY_FUNCTION__ << std::endl;
   std::vector<std::pair<unsigned long long, unsigned long long> > out;
@@ -31,12 +39,6 @@ std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::Ge
     for (const auto& range : reader->ranges())
       out.emplace_back(range);  //FIXME
   return out;
-}
-
-void k4DataSource::Initialise() {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
-  for (auto& reader : readers_)
-    reader->init();
 }
 
 bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
@@ -47,12 +49,6 @@ bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
   return true;
 }
 
-void k4DataSource::SetNSlots(unsigned int nSlots) {
-  for (auto& reader : readers_)
-    reader->setNumSlots(nSlots);
-  num_slots_ = nSlots;
-}
-
 k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name, const std::type_info& tid) {
   const std::string br_name(name);
   // first browse the list of conversion modules loaded in runtime
@@ -60,24 +56,23 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
     if (col.first != name)
       continue;
     const auto& mod_inputs = col.second.inputs();
-    std::cout << "Module '" << br_name << "' will build collection with";
     for (const auto& mod : mod_inputs)
-      std::cout << " " << mod << " (" << GetTypeName(mod) << ")";
-    std::cout << std::endl;
     // found corresponding module ; will start conversion of inputs
     std::vector<std::vector<void*> > inputs(num_slots_,  // one per slot
                                             std::vector<void*>(mod_inputs.size(), nullptr));
     for (size_t i = 0; i < mod_inputs.size(); ++i) {
       const auto& input = mod_inputs.at(i);
       // read input branch, and return a vector of contents (one per slot)
-      const auto var_content = readBranch(input, ROOT::Internal::RDF::TypeName2TypeID(GetTypeName(input)));
+      const auto& var_content = readBranch(input, ROOT::Internal::RDF::TypeName2TypeID(GetTypeName(input)));
       std::cout << input << ":::: " << ROOT::Internal::RDF::TypeName2TypeID(GetTypeName(input)).name() << std::endl;
       for (size_t j = 0; j < num_slots_; ++j)
         inputs[j][i] = var_content.at(j);
     }
     std::vector<void*> outputs;
-    for (const auto& input : inputs)
+    for (const auto& input : inputs) {
+      auto* test = static_cast<std::vector<edm4hep::ReconstructedParticleData>*>(input.at(0));
       outputs.emplace_back(col.second.apply(input).at(0));  //FIXME
+    }
     return outputs;
   }
   // did not find in modules ; will look into the input file branches

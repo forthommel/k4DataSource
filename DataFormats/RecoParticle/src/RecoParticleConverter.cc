@@ -7,19 +7,21 @@
 
 class RecoParticlesConverter : public DataFormatter {
 public:
-  RecoParticlesConverter() : DataFormatter({"ReconstructedParticles"}, {"RecoParticle"}) {}
-
-  std::vector<void*> convert() override {
-    //std::vector<edm4hep::ReconstructedParticleData> parts;
-    //auto* parts = dynamic_cast<std::vector<edm4hep::ReconstructedParticleData>*>(input.at(0));
-    auto* parts = reinterpret_cast<std::vector<edm4hep::ReconstructedParticleData>*>(input_data_.at(0));
-    //auto* parts = (std::vector<edm4hep::ReconstructedParticleData>*)(input.at(0));
-    //auto parts = *(edm4hep::ReconstructedParticleData*)(input.at(0));
-    auto output = new std::vector<RecoParticle>();
-    //for (const auto& part : *parts)
-    //  output->emplace_back(part.momentum.x, part.momentum.y, part.momentum.z, part.energy);
-    return {(void*)output};
+  RecoParticlesConverter()
+      : h_reco_parts_(consumes<std::vector<edm4hep::ReconstructedParticleData> >("ReconstructedParticles")) {
+    produces<RecoParticle>("RecoParticle");
   }
+
+  void convert() override {
+    auto output = new std::vector<RecoParticle>();
+    const auto& parts = *h_reco_parts_;
+    //for (const auto& part : *h_reco_parts_)
+    //  output->emplace_back(part.momentum.x, part.momentum.y, part.momentum.z, part.energy);
+    put(std::move(output));
+  }
+
+private:
+  Handle<std::vector<edm4hep::ReconstructedParticleData> > h_reco_parts_;
 };
 
 REGISTER_CONVERTER("RecoParticles", RecoParticlesConverter)

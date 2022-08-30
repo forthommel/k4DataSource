@@ -4,6 +4,7 @@
 #include <TChain.h>
 
 #include <memory>
+#include <unordered_map>
 
 class k4TreeReader {
 public:
@@ -14,7 +15,6 @@ public:
   const std::string& typeName(const std::string&) const;
 
   void setNumSlots(size_t);
-  void init();
   /// Initialise the readout of branches
   /// \param[in] slot unique slot identifier
   /// \param[in] entry event identifier
@@ -39,6 +39,7 @@ private:
 
   std::vector<std::unique_ptr<TChain> > chains_;                            // one chain per slot
   std::vector<std::pair<unsigned long long, unsigned long long> > ranges_;  // one range per slot
+  std::vector<unsigned long long> current_entry_;                           // one entry per slot
 
   std::vector<std::unique_ptr<double> > dangling_ptrs_;
 };

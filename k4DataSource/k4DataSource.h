@@ -15,13 +15,14 @@ public:
 
   k4DataSource& addSource(const std::string&);
 
-  const std::vector<std::string>& GetColumnNames() const override { return column_names_; }
-  std::vector<std::pair<unsigned long long, unsigned long long> > GetEntryRanges() override;
-  std::string GetTypeName(std::string_view) const override;
   bool HasColumn(std::string_view) const override;
-  bool SetEntry(unsigned int, unsigned long long) override;
+  const std::vector<std::string>& GetColumnNames() const override { return column_names_; }
+  std::string GetTypeName(std::string_view) const override;
+
   void SetNSlots(unsigned int) override;
   void Initialise() override;
+  std::vector<std::pair<unsigned long long, unsigned long long> > GetEntryRanges() override;
+  bool SetEntry(unsigned int, unsigned long long) override;
 
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;

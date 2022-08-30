@@ -6,4 +6,6 @@
 #include <edm4hep/TrackData.h>
 #include <edm4hep/TrackState.h>
 
+#include <vector>
+
 #include "k4DataSource/k4DataSource.h"
