@@ -2,10 +2,12 @@
 #define k4DataSource_DataFormatter_h
 
 #include <cstring>
+#include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
+
+class TClass;
 
 /// A base algorithm for the production of event collections
 class DataFormatter {
@@ -31,12 +33,12 @@ public:
   template <typename T>
   Handle<T> consumes(const std::string& label) {
     cols_in_.emplace_back(label);
-    input_coll_[label] = new T();
-    input_size_[label] = sizeof(T);
-    return Handle<T>(input_coll_[label]);
+    inputs_[label] = Collection{new T(), nullptr, sizeof(T), typeid(T).hash_code()};
+    return Handle<T>(inputs_[label].collection);
   }
   /// Retrieve a list of input collections consumed by this module
   const std::vector<std::string>& inputs() const { return cols_in_; }
+  void setInputType(const std::string& coll, TClass* type) { inputs_.at(coll).class_type = type; }
 
   /// Extract all collections produced by the algorithm
   std::vector<void*> extract() const;
@@ -44,12 +46,11 @@ public:
   template <typename T>
   void produces(const std::string& label) {
     cols_out_.emplace_back(label);
-    output_coll_[label] = new T;
-    output_size_[label] = sizeof(T);
-    output_type_[label] = typeid(T).hash_code();
+    outputs_[label] = Collection{new T(), nullptr, sizeof(T), typeid(T).hash_code()};
   }
   /// Retrieve a list of output collections provided by this module
   const std::vector<std::string>& outputs() const { return cols_out_; }
+  void setOutputType(const std::string& coll, TClass* type) { outputs_.at(coll).class_type = type; }
 
   /// Put the collection onto the event
   template <typename T>
@@ -61,27 +62,31 @@ public:
   void put(const T* coll, const std::string& label = "") {
     void* ptr{nullptr};
     if (label.empty()) {
-      for (const auto& info : output_type_) {
-        if (info.second == typeid(T).hash_code())
-          ptr = output_coll_.at(info.first);
+      for (const auto& output : outputs_) {
+        if (output.second.type == typeid(T).hash_code())
+          ptr = output.second.collection;
       }
       if (!ptr)
         return;
     } else
-      ptr = output_coll_.at(label);
+      ptr = outputs_.at(label).collection;
     memcpy(ptr, coll, sizeof(T));
   }
+
+  void describe() const;
 
 private:
   std::vector<std::string> cols_in_;
   std::vector<std::string> cols_out_;
 
-  std::unordered_map<std::string, void*> input_coll_;
-  std::unordered_map<std::string, size_t> input_size_;
-
-  std::unordered_map<std::string, void*> output_coll_;
-  std::unordered_map<std::string, size_t> output_size_;
-  std::unordered_map<std::string, size_t> output_type_;
+  struct Collection {
+    void* collection{nullptr};
+    TClass* class_type{nullptr};
+    size_t size{0ull};
+    size_t type{0ull};
+  };
+  std::map<std::string, Collection> inputs_;
+  std::map<std::string, Collection> outputs_;
 };
 
 #endif

@@ -54,8 +54,8 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
   for (auto& col : column_types_) {
     if (col.first != name)
       continue;
-    const auto& mod_inputs = col.second.inputs();
-    for (const auto& mod : mod_inputs)
+    const auto& mod_inputs = col.second.converter().inputs();
+    col.second.converter().describe();
     // found corresponding module ; will start conversion of inputs
     std::vector<std::vector<void*> > inputs(num_slots_,  // one per slot
                                             std::vector<void*>(mod_inputs.size(), nullptr));
@@ -91,7 +91,7 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
   // first browse the columns build from a conversion module
   for (const auto& col : column_types_)
     if (col.first == type) {
-      const auto& outputs = col.second.outputs();
+      const auto& outputs = col.second.converter().outputs();
       if (outputs.size() == 1)
         return outputs.at(0);  //FIXME only supported mode for now
       return "";

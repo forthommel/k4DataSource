@@ -12,8 +12,7 @@ public:
   explicit k4DataSourceItem(const std::string&, std::unique_ptr<DataFormatter>);
 
   const std::string& name() const { return name_; }
-  const std::vector<std::string>& inputs() const;
-  const std::vector<std::string>& outputs() const;
+  const DataFormatter& converter() const { return *converter_; }
   std::vector<void*> apply(const std::vector<void*>&);
 
 private:
