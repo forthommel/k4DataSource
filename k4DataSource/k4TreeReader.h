@@ -20,7 +20,7 @@ public:
   /// \param[in] entry event identifier
   bool initEntry(size_t slot, unsigned long long entry);
   inline const std::vector<std::pair<unsigned long long, unsigned long long> >& ranges() const { return ranges_; }
-  std::vector<void*> read(const std::string&, const std::type_info&);
+  const std::vector<void*>& read(const std::string&, const std::type_info&) const;
 
 private:
   const std::string source_{};

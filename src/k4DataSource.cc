@@ -1,4 +1,3 @@
-#include <edm4hep/ReconstructedParticleData.h>
 
 #include "k4DataSource/k4DataConverters.h"
 #include "k4DataSource/k4DataSource.h"
@@ -64,15 +63,14 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
       const auto& input = mod_inputs.at(i);
       // read input branch, and return a vector of contents (one per slot)
       const auto& var_content = readBranch(input, ROOT::Internal::RDF::TypeName2TypeID(GetTypeName(input)));
-      std::cout << input << ":::: " << ROOT::Internal::RDF::TypeName2TypeID(GetTypeName(input)).name() << std::endl;
-      for (size_t j = 0; j < num_slots_; ++j)
+      for (size_t j = 0; j < num_slots_; ++j) {
         inputs[j][i] = var_content.at(j);
+      }
     }
     std::vector<void*> outputs;
-    for (const auto& input : inputs) {
-      auto* test = static_cast<std::vector<edm4hep::ReconstructedParticleData>*>(input.at(0));
-      outputs.emplace_back(col.second.apply(input).at(0));  //FIXME
-    }
+    for (const auto& input : inputs)  // one per slot
+      outputs.emplace_back(col.second.apply(input).at(0));
+    //FIXME also use other output collections if available
     return outputs;
   }
   // did not find in modules ; will look into the input file branches
@@ -107,18 +105,18 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
   return "";
 }
 
-std::vector<void*> k4DataSource::readBranch(const std::string& branch_name, const std::type_info& tid) {
+const std::vector<void*>& k4DataSource::readBranch(const std::string& branch_name, const std::type_info& tid) const {
   // browse all input sources to find the branch with a given type
   for (auto& reader : readers_) {
     const auto& branches = reader->branches();
-    if (std::find(branches.begin(), branches.end(), branch_name) != branches.end()) {
-      // input source was found, proceed with this one
-      const auto out = reader->read(branch_name, tid);
-      if (out.size() != num_slots_)
-        throw std::runtime_error("Expected " + std::to_string(num_slots_) + " value(s) and retrieved " +
-                                 std::to_string(out.size()) + " for branch '" + branch_name + "'.");
-      return out;
-    }
+    if (std::find(branches.begin(), branches.end(), branch_name) == branches.end())
+      continue;
+    // input source was found, proceed with this one
+    const auto& out = reader->read(branch_name, tid);
+    if (out.size() != num_slots_)
+      throw std::runtime_error("Expected " + std::to_string(num_slots_) + " value(s) and retrieved " +
+                               std::to_string(out.size()) + " for branch '" + branch_name + "'.");
+    return out;
   }
   throw std::runtime_error("Failed to read branch name '" + branch_name + "' from readers!");
 }

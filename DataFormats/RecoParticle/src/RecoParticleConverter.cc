@@ -14,8 +14,8 @@ public:
   void convert() override {
     auto output = std::make_unique<std::vector<RecoParticle> >();
     const auto& parts = *h_reco_parts_;
-    //for (const auto& part : *h_reco_parts_)
-    //  output->emplace_back(part.momentum.x, part.momentum.y, part.momentum.z, part.energy);
+    for (const auto& part : *h_reco_parts_)
+      output->emplace_back(part.momentum.x, part.momentum.y, part.momentum.z, part.energy);
     put(std::move(output));
   }
 

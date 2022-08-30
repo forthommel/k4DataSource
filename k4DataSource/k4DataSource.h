@@ -26,7 +26,7 @@ public:
 
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;
-  std::vector<void*> readBranch(const std::string&, const std::type_info&);
+  const std::vector<void*>& readBranch(const std::string&, const std::type_info&) const;
 
   size_t num_slots_{1};
   std::vector<std::unique_ptr<k4TreeReader> > readers_;

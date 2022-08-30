@@ -1,5 +1,4 @@
-#include <ROOT/RDataFrame.hxx>
-#include <iostream>
+#include <ROOT/RDF/Utils.hxx>
 
 #include "k4DataSource/k4TreeReader.h"
 
@@ -9,12 +8,12 @@ k4TreeReader::k4TreeReader(const std::string& source, const std::vector<std::str
   for (const auto& filename : filenames_)
     chain_model.Add(filename.c_str());
   for (size_t i = 0; i < chain_model.GetListOfBranches()->GetEntries(); ++i) {
-    std::string branch_name = chain_model.GetListOfBranches()->At(i)->GetName();
+    const std::string branch_name = chain_model.GetListOfBranches()->At(i)->GetName();
     const auto type_name =
         ROOT::Internal::RDF::ColumnName2ColumnTypeName(branch_name, &chain_model, nullptr, nullptr, false);
     TClass::GetClass(type_name.c_str());  // just in case supporting library is not yet loaded
     branch_names_.emplace_back(branch_name);
-    branches_[branch_name] = BranchInfo{branch_name, type_name, {nullptr}};
+    branches_[branch_name] = BranchInfo{branch_name, type_name, {}};
   }
   num_entries_ = chain_model.GetEntries();
 }
@@ -41,15 +40,19 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
   // add a TChain for each slot to be booked
   for (size_t i = 0; i < num_slots; ++i) {
     auto chain = std::make_unique<TChain>(source_.c_str());
-    chain->ResetBit(kMustCleanup);
     for (const auto& filename : filenames_)
       chain->Add(filename.c_str());
-    //chain->Show(0);
+    chain->SetBranchStatus("*", false);
     for (auto& branch : branches_) {
       auto& branch_info = branch.second;
       if (const auto type_class = TClass::GetClass(branch_info.type.c_str()))
         chain->SetBranchAddress(
-            branch_info.name.c_str(), &branch_info.addresses[i], nullptr, type_class, EDataType::kNoType_t, true);
+            // linking pre-booked memory to tree contents
+            branch_info.name.c_str(),
+            &branch_info.addresses.at(i),
+            type_class,
+            EDataType::kNoType_t,
+            true);
       else {
         auto& addr = branch_info.addresses[i];
         if (!addr) {
@@ -58,10 +61,9 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
         }
         chain->SetBranchAddress(branch_info.name.c_str(), addr);
       }
-      chain->AddBranchToCache(branch_info.name.c_str(), true);
+      chain->SetBranchStatus(branch_info.name.c_str(), true);
     }
-    //chain->SetCacheSize(100000000);
-    chain->GetEntry(i * expected_size);
+    chain->GetEntry(i * expected_size);  // start by loading the first entry into memory
     chains_.emplace_back(std::move(chain));
     ranges_.emplace_back(std::make_pair(
         i * expected_size,                           // beginning of range
@@ -74,11 +76,11 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
 
 bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
   if (slot >= chains_.size() || !chains_.at(slot))
-    throw std::runtime_error("Slot " + std::to_string(slot) + " is invalid as it exceeds the " +
-                             std::to_string(chains_.size()) + " slot(s) booked.");
+    throw std::runtime_error("Invalid slot index requested:\n  maximal value: " + std::to_string(chains_.size() - 1) +
+                             ",\n  got: " + std::to_string(slot) + ".");
   if (entry >= num_entries_)
-    throw std::runtime_error("Entry number is invalid and exceeds total number of entries in file: " +
-                             std::to_string(slot) + " >= " + std::to_string(num_entries_) + ".");
+    throw std::runtime_error("Invalid entry requested:\n  maximal value: " + std::to_string(num_entries_ - 1) +
+                             ",\n  got: " + std::to_string(slot) + ".");
   if (entry == 0 || entry != current_entry_.at(slot)) {
     auto ret = chains_.at(slot)->GetEntry(entry);
     current_entry_[slot] = entry;
@@ -87,16 +89,11 @@ bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
   return false;
 }
 
-std::vector<void*> k4TreeReader::read(const std::string& name, const std::type_info& tid) {
-  const auto& type = typeName(name);  // possibly throws
-  const auto& req_tid = ROOT::Internal::RDF::TypeName2TypeID(type);
+const std::vector<void*>& k4TreeReader::read(const std::string& name, const std::type_info& tid) const {
+  const auto& type = typeName(name);                                 // possibly throws
+  const auto& req_tid = ROOT::Internal::RDF::TypeName2TypeID(type);  // NO copy
   if (req_tid != tid)
-    throw std::runtime_error("Mismatching column type for '" + name + "': " + req_tid.name() + " != " + tid.name() +
-                             "!");
-
-  auto& bi = branches_.at(name);
-  std::vector<void*> out(chains_.size(), nullptr);  // as many as slots
-  for (size_t i = 0; i < chains_.size(); ++i)
-    out[i] = (void*)&branches_[name].addresses[i];
-  return out;
+    throw std::runtime_error("Invalid type requested for column '" + name + "':\n  expected " + req_tid.name() +
+                             ",\n  got " + tid.name() + ".");
+  return branches_.at(name).addresses;
 }

@@ -18,36 +18,28 @@ public:
 
   /// A collection translation unit
   template <typename T>
-  class Handle {
+  class Handle : public std::shared_ptr<T> {
   public:
     Handle() = default;
-    Handle(T* ptr) : ptr_((void*)ptr) {}
-    Handle(const Handle<T>& oth) : ptr_(oth.ptr_) {}
-    ~Handle() = default;
-
-    const T* operator->() const { return static_cast<T*>(ptr_); }
-    const T& operator*() const { return *static_cast<T*>(ptr_); }
-
-  private:
-    void* ptr_;
+    explicit Handle(void* ptr) : std::shared_ptr<T>(new (ptr) T()) {}
+    virtual ~Handle() = default;
   };
 
   /// Feed the algorithm a set of input values
   void feed(const std::vector<void*>&);
-  /// Extract all collections produced by the algorithm
-  std::vector<void*> extract() const;
-
   /// Declare an input collection to be consumed by the algorithm
   template <typename T>
   Handle<T> consumes(const std::string& label) {
     cols_in_.emplace_back(label);
-    input_data_[label] = new T;
+    input_coll_[label] = new T();
     input_size_[label] = sizeof(T);
-    return static_cast<T*>(input_data_[label]);
+    return Handle<T>(input_coll_[label]);
   }
   /// Retrieve a list of input collections consumed by this module
   const std::vector<std::string>& inputs() const { return cols_in_; }
 
+  /// Extract all collections produced by the algorithm
+  std::vector<void*> extract() const;
   /// Declare an output collection to be produced by the algorithm
   template <typename T>
   void produces(const std::string& label) {
@@ -84,7 +76,7 @@ private:
   std::vector<std::string> cols_in_;
   std::vector<std::string> cols_out_;
 
-  std::unordered_map<std::string, void*> input_data_;
+  std::unordered_map<std::string, void*> input_coll_;
   std::unordered_map<std::string, size_t> input_size_;
 
   std::unordered_map<std::string, void*> output_coll_;
