@@ -1,5 +1,5 @@
-#ifndef k4DataSource_DataFormatter_h
-#define k4DataSource_DataFormatter_h
+#ifndef k4DataSource_k4DataConverter_h
+#define k4DataSource_k4DataConverter_h
 
 #include <cstring>
 #include <map>
@@ -10,10 +10,10 @@
 class TClass;
 
 /// A base algorithm for the production of event collections
-class DataFormatter {
+class k4DataConverter {
 public:
-  DataFormatter() = default;
-  virtual ~DataFormatter() = default;
+  k4DataConverter() = default;
+  virtual ~k4DataConverter() = default;
 
   /// User-defined collection building
   virtual void convert() = 0;

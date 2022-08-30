@@ -3,9 +3,9 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "k4DataSource/DataFormatter.h"
+#include "k4DataSource/k4DataConverter.h"
 
-void DataFormatter::feed(const std::vector<void*>& input) {
+void k4DataConverter::feed(const std::vector<void*>& input) {
   if (input.size() != cols_in_.size())
     throw std::runtime_error("Invalid inputs multiplicity:\n  expected: " + std::to_string(cols_in_.size()) +
                              ",\n  got: " + std::to_string(input.size()) + ".");
@@ -16,7 +16,7 @@ void DataFormatter::feed(const std::vector<void*>& input) {
   }
 }
 
-std::vector<void*> DataFormatter::extract() const {
+std::vector<void*> k4DataConverter::extract() const {
   std::vector<void*> out;
   for (const auto& var : cols_out_) {
     out.emplace_back(new char[outputs_.at(var).size]);
@@ -25,7 +25,7 @@ std::vector<void*> DataFormatter::extract() const {
   return out;
 }
 
-void DataFormatter::describe() const {
+void k4DataConverter::describe() const {
   const auto sep = std::string(60, '=');
   std::cout << sep << "\nModule with input(s):";
   for (const auto& mod : inputs_) {

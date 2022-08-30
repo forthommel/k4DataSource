@@ -5,19 +5,19 @@
 #include <string>
 #include <vector>
 
-class DataFormatter;
+class k4DataConverter;
 
 class k4DataSourceItem {
 public:
-  explicit k4DataSourceItem(const std::string&, std::unique_ptr<DataFormatter>);
+  explicit k4DataSourceItem(const std::string&, std::unique_ptr<k4DataConverter>);
 
   const std::string& name() const { return name_; }
-  const DataFormatter& converter() const { return *converter_; }
+  const k4DataConverter& converter() const { return *converter_; }
   std::vector<void*> apply(const std::vector<void*>&);
 
 private:
   const std::string name_;
-  std::unique_ptr<DataFormatter> converter_;
+  std::unique_ptr<k4DataConverter> converter_;
 };
 
 #endif

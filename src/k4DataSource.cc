@@ -1,12 +1,12 @@
 
-#include "k4DataSource/k4DataConverters.h"
+#include "k4DataSource/k4DataConverterFactory.h"
 #include "k4DataSource/k4DataSource.h"
 
 k4DataSource::k4DataSource(std::string_view tree_name,
                            const std::vector<std::string>& filenames,
                            const std::vector<std::string>& columns_list) {
   readers_.emplace_back(std::make_unique<k4TreeReader>(std::string(tree_name), filenames));
-  for (const auto& conv : k4DataConverters::get().converters())
+  for (const auto& conv : k4DataConverterFactory::get().converters())
     std::cout << "... " << conv << std::endl;
 
   for (const auto& col : columns_list)
@@ -14,7 +14,7 @@ k4DataSource::k4DataSource(std::string_view tree_name,
 }
 
 k4DataSource& k4DataSource::addSource(const std::string& source) {
-  auto converter = k4DataConverters::get().build(source);
+  auto converter = k4DataConverterFactory::get().build(source);
   //for (const auto& output : converter->outputs())
   //  column_names_.emplace_back(output);
   for (const auto& in_coll : converter->inputs())

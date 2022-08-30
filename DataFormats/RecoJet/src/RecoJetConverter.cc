@@ -3,10 +3,10 @@
 #include <iostream>  //FIXME
 
 #include "DataFormats/RecoJet/include/RecoJet.h"
-#include "k4DataSource/DataFormatter.h"
-#include "k4DataSource/k4DataConverters.h"
+#include "k4DataSource/k4DataConverter.h"
+#include "k4DataSource/k4DataConverterFactory.h"
 
-class RecoJetsConverter : public DataFormatter {
+class RecoJetsConverter : public k4DataConverter {
 public:
   RecoJetsConverter()
       : h_jets_(consumes<std::vector<edm4hep::ReconstructedParticleData> >("Jet")),
