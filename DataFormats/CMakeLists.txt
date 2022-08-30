@@ -26,4 +26,5 @@ macro(build_dataformat name path)
   endif()
 endmacro()
 
+build_dataformat(RecoJet RecoJet)
 build_dataformat(RecoParticle RecoParticle)

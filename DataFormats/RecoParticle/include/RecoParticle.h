@@ -12,7 +12,7 @@ public:
   double pz() const { return pz_; }
   double e() const { return e_; }
 
-private:
+protected:
   double px_{0.};
   double py_{0.};
   double pz_{0.};

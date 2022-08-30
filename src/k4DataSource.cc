@@ -98,7 +98,8 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
       const auto& outputs = col.second.converter().outputs();
       if (outputs.size() == 1)
         return outputs.at(0);  //FIXME only supported mode for now
-      return "";
+      throw std::runtime_error("Unsupported output format providing " + std::to_string(outputs.size()) +
+                               " collections.");
     }
   // then browse the input source columns
   std::string stype(type);
