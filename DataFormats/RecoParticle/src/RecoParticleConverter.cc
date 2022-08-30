@@ -1,6 +1,5 @@
 #include <edm4hep/ReconstructedParticleData.h>
 
-
 #include "DataFormats/RecoParticle/include/RecoParticle.h"
 #include "k4DataSource/DataFormatter.h"
 #include "k4DataSource/k4DataConverters.h"
@@ -13,7 +12,7 @@ public:
   }
 
   void convert() override {
-    auto output = new std::vector<RecoParticle>();
+    auto output = std::make_unique<std::vector<RecoParticle> >();
     const auto& parts = *h_reco_parts_;
     //for (const auto& part : *h_reco_parts_)
     //  output->emplace_back(part.momentum.x, part.momentum.y, part.momentum.z, part.energy);

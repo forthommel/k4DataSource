@@ -58,6 +58,11 @@ public:
   virtual void convert() = 0;
 
   template <typename T>
+  void put(std::unique_ptr<T> coll, const std::string& label = "") {
+    put(coll.get(), label);
+  }
+
+  template <typename T>
   void put(const T* coll, const std::string& label = "") {
     void* ptr{nullptr};
     if (label.empty()) {
