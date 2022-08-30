@@ -17,6 +17,10 @@ k4DataSource& k4DataSource::addSource(const std::string& source) {
   auto converter = k4DataConverters::get().build(source);
   //for (const auto& output : converter->outputs())
   //  column_names_.emplace_back(output);
+  for (const auto& in_coll : converter->inputs())
+    converter->setInputType(in_coll, TClass::GetClass(GetTypeName(in_coll).c_str()));
+  for (const auto& out_coll : converter->outputs())
+    converter->setOutputType(out_coll, TClass::GetClass(GetTypeName(out_coll).c_str()));
   column_names_.emplace_back(source);
   column_types_.insert(std::make_pair(source, k4DataSourceItem(source, std::move(converter))));
   std::cout << ">>> added " << source << std::endl;
