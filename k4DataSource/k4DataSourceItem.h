@@ -6,6 +6,7 @@
 #include <vector>
 
 class k4DataConverter;
+class k4Handle;
 
 class k4DataSourceItem {
 public:
@@ -13,7 +14,7 @@ public:
 
   const std::string& name() const { return name_; }
   const k4DataConverter& converter() const { return *converter_; }
-  std::vector<void*> apply(const std::vector<void*>&);
+  std::vector<k4Handle> apply(const std::vector<k4Handle>&);
 
 private:
   const std::string name_;

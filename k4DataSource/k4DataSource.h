@@ -26,7 +26,7 @@ public:
 
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;
-  const std::vector<void*>& readBranch(const std::string&, const std::type_info&) const;
+  const k4Record& readBranch(const std::string&, const std::type_info&) const;
 
   size_t num_slots_{1};
   std::vector<std::unique_ptr<k4TreeReader> > readers_;
@@ -36,6 +36,7 @@ private:
   std::unordered_map<std::string, k4DataSourceItem> column_types_;
 };
 
+/// A helper object to expose the data source to the outside world
 class k4DataFrameHandler {
 public:
   k4DataFrameHandler(ROOT::RDataFrame&& rdf) : rdf_(rdf) {}

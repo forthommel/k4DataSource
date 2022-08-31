@@ -3,8 +3,9 @@
 
 #include <TChain.h>
 
-#include <memory>
 #include <unordered_map>
+
+#include "k4DataSource/k4Record.h"
 
 class k4TreeReader {
 public:
@@ -20,7 +21,7 @@ public:
   /// \param[in] entry event identifier
   bool initEntry(size_t slot, unsigned long long entry);
   inline const std::vector<std::pair<unsigned long long, unsigned long long> >& ranges() const { return ranges_; }
-  const std::vector<void*>& read(const std::string&, const std::type_info&) const;
+  const k4Record& read(const std::string&, const std::type_info&) const;
 
 private:
   const std::string source_{};
@@ -29,9 +30,9 @@ private:
 
   /// Metadata and memory accessor for all branches
   struct BranchInfo {
-    std::string name;              ///< Branch name
-    std::string type;              ///< Human-readable branch content type
-    std::vector<void*> addresses;  ///< List of addresses (1 per slot)
+    std::string name;    ///< Branch name
+    std::string type;    ///< Human-readable branch content type
+    k4Record addresses;  ///< List of addresses (1 per slot)
   };
   // input ROOT TTree-oriented information
   std::vector<std::string> branch_names_;

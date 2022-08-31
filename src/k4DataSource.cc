@@ -52,6 +52,7 @@ bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
 
 k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name, const std::type_info& tid) {
   const std::string br_name(name);
+  Record_t outputs;
   // first browse the list of conversion modules loaded in runtime
   for (auto& col : column_types_) {
     if (col.first != name)
@@ -59,8 +60,8 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
     const auto& mod_inputs = col.second.converter().inputs();
     col.second.converter().describe();
     // found corresponding module ; will start conversion of inputs
-    std::vector<std::vector<void*> > inputs(num_slots_,  // one per slot
-                                            std::vector<void*>(mod_inputs.size(), nullptr));
+    std::vector<std::vector<k4Handle> > inputs(num_slots_,  // one per slot
+                                               std::vector<k4Handle>(mod_inputs.size(), nullptr));
     for (size_t i = 0; i < mod_inputs.size(); ++i) {
       const auto& input = mod_inputs.at(i);
       // read input branch, and return a vector of contents (one per slot)
@@ -69,14 +70,15 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
         inputs[j][i] = var_content.at(j);
       }
     }
-    std::vector<void*> outputs;
     for (const auto& input : inputs)  // one per slot
-      outputs.emplace_back(col.second.apply(input).at(0));
+      outputs.emplace_back(col.second.apply(input).at(0).get());
     //FIXME also use other output collections if available
     return outputs;
   }
   // did not find in modules ; will look into the input file branches
-  return readBranch(br_name, tid);  // possibly throw if not found
+  for (const auto& rcd : readBranch(br_name, tid))  // possibly throw if not found
+    outputs.emplace_back(rcd.get());
+  return outputs;
 }
 
 bool k4DataSource::HasColumn(std::string_view col_name) const {
@@ -104,11 +106,11 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
   for (const auto& reader : readers_)
     if (reader->has(stype))
       return reader->typeName(stype);
-  // finally give up
-  return "";
+  throw std::runtime_error("Failed to retrieve a collection of type '" + stype +
+                           "', neither in the input file nor in the list of converters.");
 }
 
-const std::vector<void*>& k4DataSource::readBranch(const std::string& branch_name, const std::type_info& tid) const {
+const k4Record& k4DataSource::readBranch(const std::string& branch_name, const std::type_info& tid) const {
   // browse all input sources to find the branch with a given type
   for (auto& reader : readers_) {
     const auto& branches = reader->branches();

@@ -45,21 +45,21 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
     chain->SetBranchStatus("*", false);
     for (auto& branch : branches_) {
       auto& branch_info = branch.second;
+      auto& addr = branch_info.addresses.at(i);
       if (const auto type_class = TClass::GetClass(branch_info.type.c_str()))
         chain->SetBranchAddress(
             // linking pre-booked memory to tree contents
             branch_info.name.c_str(),
-            &branch_info.addresses.at(i),
+            &addr,
             type_class,
             EDataType::kNoType_t,
             true);
       else {
-        auto& addr = branch_info.addresses[i];
         if (!addr) {
           dangling_ptrs_.emplace_back(std::make_unique<double>());
           addr = dangling_ptrs_.rbegin()->get();
         }
-        chain->SetBranchAddress(branch_info.name.c_str(), addr);
+        chain->SetBranchAddress(branch_info.name.c_str(), addr.get());
       }
       chain->SetBranchStatus(branch_info.name.c_str(), true);
     }
@@ -89,7 +89,7 @@ bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
   return false;
 }
 
-const std::vector<void*>& k4TreeReader::read(const std::string& name, const std::type_info& tid) const {
+const k4Record& k4TreeReader::read(const std::string& name, const std::type_info& tid) const {
   const auto& type = typeName(name);                                 // possibly throws
   const auto& req_tid = ROOT::Internal::RDF::TypeName2TypeID(type);  // NO copy
   if (req_tid != tid)

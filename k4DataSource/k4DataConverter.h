@@ -3,16 +3,16 @@
 
 #include <cstring>
 #include <map>
-#include <memory>
 #include <string>
-#include <vector>
+
+#include "k4DataSource/k4Record.h"
 
 class TClass;
 
 /// A base algorithm for the production of event collections
 class k4DataConverter {
 public:
-  k4DataConverter() = default;
+  k4DataConverter();
   virtual ~k4DataConverter() = default;
 
   /// User-defined collection building
@@ -22,13 +22,13 @@ public:
   template <typename T>
   class Handle : public std::shared_ptr<T> {
   public:
-    Handle() = default;
-    explicit Handle(void* ptr) : std::shared_ptr<T>(new (ptr) T()) {}
+    using std::shared_ptr<T>::shared_ptr;
+    explicit Handle(k4Handle& ptr) : std::shared_ptr<T>(ptr.getAs<T>()) {}
     virtual ~Handle() = default;
   };
 
   /// Feed the algorithm a set of input values
-  void feed(const std::vector<void*>&);
+  void feed(const std::vector<k4Handle>&);
   /// Declare an input collection to be consumed by the algorithm
   template <typename T>
   Handle<T> consumes(const std::string& label) {
@@ -41,7 +41,7 @@ public:
   void setInputType(const std::string& coll, TClass* type) { inputs_.at(coll).class_type = type; }
 
   /// Extract all collections produced by the algorithm
-  std::vector<void*> extract() const;
+  std::vector<k4Handle> extract() const;
   /// Declare an output collection to be produced by the algorithm
   template <typename T>
   void produces(const std::string& label) {
@@ -60,7 +60,7 @@ public:
   /// Put the collection onto the event
   template <typename T>
   void put(const T* coll, const std::string& label = "") {
-    void* ptr{nullptr};
+    k4Handle ptr{nullptr};
     if (label.empty()) {
       for (const auto& output : outputs_) {
         if (output.second.type == typeid(T).hash_code())
@@ -70,7 +70,7 @@ public:
         return;
     } else
       ptr = outputs_.at(label).collection;
-    memcpy(ptr, coll, sizeof(T));
+    memcpy(ptr.get(), coll, sizeof(T));
   }
 
   void describe() const;
@@ -80,7 +80,7 @@ private:
   std::vector<std::string> cols_out_;
 
   struct Collection {
-    void* collection{nullptr};
+    k4Handle collection{nullptr};
     TClass* class_type{nullptr};
     size_t size{0ull};
     size_t type{0ull};

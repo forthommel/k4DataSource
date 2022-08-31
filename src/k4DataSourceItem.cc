@@ -4,7 +4,7 @@
 k4DataSourceItem::k4DataSourceItem(const std::string& name, std::unique_ptr<k4DataConverter> converter)
     : name_(name), converter_(std::move(converter)) {}
 
-std::vector<void*> k4DataSourceItem::apply(const std::vector<void*>& input) {
+std::vector<k4Handle> k4DataSourceItem::apply(const std::vector<k4Handle>& input) {
   converter_->feed(input);
   converter_->convert();
   return converter_->extract();
