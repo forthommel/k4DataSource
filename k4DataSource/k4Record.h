@@ -27,7 +27,7 @@ public:
   }
 
   template <typename T>
-  const k4Handle& operator>>(T& out) const {
+  const k4Handle& fill(T& out) const {
     out = operator*<T>();
     return *this;
   }
