@@ -13,15 +13,13 @@ k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std:
 
 k4DataSource& k4DataSource::addSource(const std::string& source) {
   column_names_.emplace_back(source);
-  auto converter = k4DataConverterFactory::get().build(source);
-  //for (const auto& output : converter->outputs())
-  //  column_names_.emplace_back(output);
-  for (const auto& in_coll : converter->inputs())
-    converter->setInputType(in_coll, TClass::GetClass(GetTypeName(in_coll).c_str()));
-  for (const auto& out_coll : converter->outputs())
-    converter->setOutputType(out_coll, TClass::GetClass(GetTypeName(out_coll).c_str()));
-  column_names_.emplace_back(source);
-  column_types_.insert(std::make_pair(source, k4DataSourceItem(source, std::move(converter))));
+  converter_types_.insert(
+      std::make_pair(source, k4DataSourceItem(source, std::move(k4DataConverterFactory::get().build(source)))));
+  auto& conv = converter_types_.at(source).converter();
+  for (const auto& in_coll : conv.inputs())
+    conv.setInputType(in_coll, TClass::GetClass(GetTypeName(in_coll).c_str()));
+  for (const auto& out_coll : conv.outputs())
+    conv.setOutputType(out_coll, TClass::GetClass(GetTypeName(out_coll).c_str()));
   std::cout << ">>> added " << source << std::endl;
   return *this;
 }

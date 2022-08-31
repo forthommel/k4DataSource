@@ -11,10 +11,15 @@ class k4Handle;
 class k4DataSourceItem {
 public:
   explicit k4DataSourceItem(const std::string&, std::unique_ptr<k4DataConverter>);
-
+  /// Name of the converted objects collection
   const std::string& name() const { return name_; }
+
+  /// Converter object reference
+  k4DataConverter& converter() { return *converter_; }
+  /// Constant-qualified qualifier object reference
   const k4DataConverter& converter() const { return *converter_; }
-  std::vector<k4Handle> apply(const std::vector<k4Handle>&);
+  /// Run the converter on a list of variables
+  std::vector<k4Handle> apply(const std::vector<k4Handle>&) const;
 
 private:
   const std::string name_;

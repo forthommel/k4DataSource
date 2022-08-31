@@ -9,8 +9,8 @@ class RecoJetsConverter : public k4DataConverter {
 public:
   RecoJetsConverter()
       : h_jets_(consumes<std::vector<edm4hep::ReconstructedParticleData> >("Jet")),
-        h_reco_parts_(consumes<std::vector<RecoParticle> >("RecoParticles")) {
-    produces<std::vector<RecoJet> >("RecoJet");
+        h_reco_parts_(consumes<std::vector<RecoParticle> >("recoParticles")) {
+    produces<std::vector<RecoJet> >("jets");
   }
 
   void convert() override {
