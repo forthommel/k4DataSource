@@ -10,7 +10,7 @@ public:
   RecoJetsConverter()
       : h_jets_(consumes<std::vector<edm4hep::ReconstructedParticleData> >("Jet")),
         h_reco_parts_(consumes<std::vector<RecoParticle> >("RecoParticles")) {
-    produces<RecoJet>("RecoJet");
+    produces<std::vector<RecoJet> >("RecoJet");
   }
 
   void convert() override {

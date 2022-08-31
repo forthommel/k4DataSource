@@ -33,7 +33,7 @@ private:
 
   // output source-oriented information
   std::vector<std::string> column_names_;
-  std::unordered_map<std::string, k4DataSourceItem> column_types_;
+  std::unordered_map<std::string, k4DataSourceItem> converter_types_;
 };
 
 /// A helper object to expose the data source to the outside world

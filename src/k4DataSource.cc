@@ -12,6 +12,7 @@ k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std:
 }
 
 k4DataSource& k4DataSource::addSource(const std::string& source) {
+  column_names_.emplace_back(source);
   auto converter = k4DataConverterFactory::get().build(source);
   //for (const auto& output : converter->outputs())
   //  column_names_.emplace_back(output);
@@ -54,7 +55,7 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
   const std::string br_name(name);
   Record_t outputs;
   // first browse the list of conversion modules loaded in runtime
-  for (auto& col : column_types_) {
+  for (auto& col : converter_types_) {
     if (col.first != name)
       continue;
     const auto& mod_inputs = col.second.converter().inputs();
@@ -93,14 +94,14 @@ bool k4DataSource::HasColumn(std::string_view col_name) const {
 
 std::string k4DataSource::GetTypeName(std::string_view type) const {
   // first browse the columns build from a conversion module
-  for (const auto& col : column_types_)
-    if (col.first == type) {
-      const auto& outputs = col.second.converter().outputs();
-      if (outputs.size() == 1)
-        return outputs.at(0);  //FIXME only supported mode for now
-      throw std::runtime_error("Unsupported output format providing " + std::to_string(outputs.size()) +
-                               " collections.");
-    }
+  for (const auto& col : converter_types_) {
+    if (col.first != type)
+      continue;
+    const auto& outputs = col.second.converter().outputs();
+    if (outputs.size() == 1)
+      return outputs.at(0);  //FIXME only supported mode for now
+    throw std::runtime_error("Unsupported output format providing " + std::to_string(outputs.size()) + " collections.");
+  }
   // then browse the input source columns
   std::string stype(type);
   for (const auto& reader : readers_)

@@ -1,3 +1,5 @@
+#include <TChain.h>
+
 #include <ROOT/RDF/Utils.hxx>
 
 #include "k4DataSource/k4TreeReader.h"

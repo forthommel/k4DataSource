@@ -1,11 +1,11 @@
 #ifndef k4DataSource_k4TreeReader_h
 #define k4DataSource_k4TreeReader_h
 
-#include <TChain.h>
-
 #include <unordered_map>
 
 #include "k4DataSource/k4Record.h"
+
+class TChain;
 
 class k4TreeReader {
 public:
