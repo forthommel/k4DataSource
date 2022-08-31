@@ -11,7 +11,7 @@
 /// A ROOT RDataSource-derived high level reader
 class k4DataSource final : public ROOT::RDF::RDataSource {
 public:
-  explicit k4DataSource(std::string_view, const std::vector<std::string>&, const std::vector<std::string>& = {});
+  explicit k4DataSource(const std::vector<std::string>&, const std::vector<std::string>& = {});
 
   k4DataSource& addSource(const std::string&);
 
@@ -36,10 +36,16 @@ private:
   std::unordered_map<std::string, k4DataSourceItem> column_types_;
 };
 
-namespace ROOT::Experimental {
-  ROOT::RDataFrame MakeK4DataFrame(std::string_view ntuple_name,
-                                   const std::vector<std::string>& file_names,
-                                   const std::vector<std::string>& = {});
-}
+class k4DataFrameHandler {
+public:
+  k4DataFrameHandler(ROOT::RDataFrame&& rdf) : rdf_(rdf) {}
+
+  ROOT::RDataFrame* operator->() { return &rdf_; }
+
+private:
+  ROOT::RDataFrame rdf_;
+};
+
+k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names, const std::vector<std::string>& = {});
 
 #endif

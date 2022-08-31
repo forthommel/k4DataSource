@@ -2,10 +2,8 @@
 #include "k4DataSource/k4DataConverterFactory.h"
 #include "k4DataSource/k4DataSource.h"
 
-k4DataSource::k4DataSource(std::string_view tree_name,
-                           const std::vector<std::string>& filenames,
-                           const std::vector<std::string>& columns_list) {
-  readers_.emplace_back(std::make_unique<k4TreeReader>(std::string(tree_name), filenames));
+k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std::vector<std::string>& columns_list) {
+  readers_.emplace_back(std::make_unique<k4TreeReader>("events", filenames));
   for (const auto& conv : k4DataConverterFactory::get().converters())
     std::cout << "... " << conv << std::endl;
 
@@ -126,8 +124,9 @@ const std::vector<void*>& k4DataSource::readBranch(const std::string& branch_nam
   throw std::runtime_error("Failed to read branch name '" + branch_name + "' from readers!");
 }
 
-ROOT::RDataFrame ROOT::Experimental::MakeK4DataFrame(std::string_view ntuple_name,
-                                                     const std::vector<std::string>& file_names,
-                                                     const std::vector<std::string>& column_names) {
-  return ROOT::RDataFrame(std::make_unique<k4DataSource>(ntuple_name, file_names, column_names));
+k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names,
+                                   const std::vector<std::string>& column_names) {
+  auto ds = std::make_unique<k4DataSource>(file_names, column_names);
+  ROOT::RDataFrame df(std::move(ds));
+  return k4DataFrameHandler(std::move(df));
 }
