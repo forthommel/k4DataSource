@@ -21,9 +21,9 @@ public:
 
   /// Metadata and memory accessor for all branches
   struct BranchInfo {
-    std::string name;    ///< Branch name
-    std::string type;    ///< Human-readable branch content type
-    k4Record addresses;  ///< List of addresses (1 per slot)
+    std::string name;           ///< Branch name
+    std::string type;           ///< Human-readable branch content type
+    k4Handle address{nullptr};  ///< Branch address
   };
 
   /// List of branch names
@@ -31,7 +31,7 @@ public:
   const BranchInfo& branchInfo(const std::string&) const;
 
   bool initEntry(unsigned long long);
-  const k4Record& read(const std::string&, const std::type_info&) const;
+  const k4Handle& read(const std::string&, const std::type_info&) const;
   const EventRange& range() const { return range_; }
 
 private:

@@ -35,7 +35,8 @@ std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::Ge
   std::vector<std::pair<unsigned long long, unsigned long long> > out;
   for (const auto& reader : readers_)
     for (const auto& range : reader->ranges())
-      out.emplace_back(range);  //FIXME
+      if (std::find(out.begin(), out.end(), range) == out.end())
+        out.emplace_back(range);
   return out;
 }
 
@@ -50,28 +51,6 @@ bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
 k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name, const std::type_info& tid) {
   const std::string br_name(name);
   Record_t outputs;
-  // first browse the list of conversion modules loaded in runtime
-  /*for (auto& col : converters_) {
-    if (col.first != name)
-      continue;
-    const auto& mod_inputs = col.second.converter().inputs();
-    col.second.converter().describe();
-    // found corresponding module ; will start conversion of inputs
-    std::vector<std::vector<k4Handle> > inputs(num_slots_,  // one per slot
-                                               std::vector<k4Handle>(mod_inputs.size(), nullptr));
-    for (size_t i = 0; i < mod_inputs.size(); ++i) {
-      const auto& input = mod_inputs.at(i);
-      // read input branch, and return a vector of contents (one per slot)
-      const auto& var_content = readBranch(input, ROOT::Internal::RDF::TypeName2TypeID(GetTypeName(input)));
-      for (size_t j = 0; j < num_slots_; ++j)
-        var_content.at(j).fill(inputs[j][i]);
-    }
-    for (const auto& input : inputs)  // one per slot
-      outputs.emplace_back(col.second.apply(input).at(0).get());
-    //FIXME also use other output collections if available
-    return outputs;
-  }*/
-  // did not find in conversion modules ; will look into the input file branches
   for (const auto& rcd : readBranch(br_name, tid))  // possibly throw if not found
     outputs.emplace_back(rcd.get());
   return outputs;
@@ -85,10 +64,8 @@ bool k4DataSource::HasColumn(std::string_view col_name) const {
 }
 
 std::string k4DataSource::GetTypeName(std::string_view type) const {
-  // first browse the columns build from a conversion module
-  // then browse the input source columns
   std::string stype(type);
-  for (const auto& reader : readers_)
+  for (const auto& reader : readers_)  // browse the input source columns
     if (reader->has(stype))
       return reader->typeName(stype);
   throw std::runtime_error("Failed to retrieve a collection of type '" + stype +

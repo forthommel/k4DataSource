@@ -1,5 +1,6 @@
 #include <TClass.h>
 
+#include <ROOT/RDF/Utils.hxx>
 #include <iostream>
 #include <stdexcept>
 
@@ -30,17 +31,15 @@ std::vector<k4Handle> k4DataConverter::extract() const {
 void k4DataConverter::describe() const {
   const auto sep = std::string(60, '=');
   std::cout << sep << "\nModule with input(s):";
-  for (const auto& mod : inputs_) {
-    std::cout << "\n  * " << mod.first;
-    if (mod.second.class_type)
-      std::cout << " (" << mod.second.class_type->GetName() << ")";
-  }
+  for (const auto& mod : inputs_)
+    std::cout << "\n  * " << mod.first << " (" << mod.second.classType()->GetName() << ")";
   std::cout << "\n"
             << "and with output(s):";
-  for (const auto& mod : outputs_) {
-    std::cout << "\n  * " << mod.first;
-    if (mod.second.class_type)
-      std::cout << " (" << mod.second.class_type->GetName() << ")";
-  }
+  for (const auto& mod : outputs_)
+    std::cout << "\n  * " << mod.first << " (" << mod.second.classType()->GetName() << ")";
   std::cout << "\n" << sep << std::endl;
+}
+
+const TClass* k4DataConverter::Collection::classType() const {
+  return TClass::GetClass(ROOT::Internal::RDF::TypeID2TypeName(type_info).c_str());
 }

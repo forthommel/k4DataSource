@@ -5,7 +5,6 @@
 #include <ROOT/RDataSource.hxx>
 #include <unordered_map>
 
-#include "k4DataSource/k4DataSourceItem.h"
 #include "k4DataSource/k4TreeReader.h"
 
 /// A ROOT RDataSource-derived high level reader

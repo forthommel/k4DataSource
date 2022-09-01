@@ -18,7 +18,7 @@ public:
   /// \param[in] entry event identifier
   bool initEntry(size_t slot, unsigned long long entry);
   std::vector<k4SlotReader::EventRange> ranges() const;
-  const k4Record& read(const std::string&, const std::type_info&) const;
+  k4Record read(const std::string&, const std::type_info&) const;
 
 private:
   const std::string source_{};

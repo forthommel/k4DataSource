@@ -9,7 +9,7 @@ public:
   using std::shared_ptr<void>::shared_ptr;
 
   template <typename T>
-  k4Handle(const shared_ptr<T>& ptr) : std::shared_ptr<void>(ptr.get()), size_(sizeof(T)) {}
+  k4Handle(const std::shared_ptr<T>& ptr) : std::shared_ptr<void>(ptr.get()), size_(sizeof(T)) {}
   template <typename T>
   k4Handle(T* ptr) : std::shared_ptr<void>(ptr, [](void*) {}), size_(sizeof(T)) {}
 

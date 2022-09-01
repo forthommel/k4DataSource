@@ -68,9 +68,12 @@ bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
   return slots_.at(slot).initEntry(entry);
 }
 
-const k4Record& k4TreeReader::read(const std::string& name, const std::type_info& tid) const {
+k4Record k4TreeReader::read(const std::string& name, const std::type_info& tid) const {
   if (current_slot_ >= slots_.size())
     throw std::runtime_error("Invalid slot index requested:\n  maximal value: " + std::to_string(slots_.size() - 1) +
                              ",\n  got: " + std::to_string(current_slot_) + ".");
-  return slots_.at(current_slot_).read(name, tid);
+  k4Record out;
+  for (auto& slot : slots_)
+    out.emplace_back(slot.read(name, tid));
+  return out;
 }
