@@ -12,21 +12,19 @@ k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std:
 }
 
 k4DataSource& k4DataSource::addSource(const std::string& source) {
-  column_names_.emplace_back(source);
-  converter_types_.insert(
-      std::make_pair(source, k4DataSourceItem(source, std::move(k4DataConverterFactory::get().build(source)))));
-  auto& conv = converter_types_.at(source).converter();
-  for (const auto& in_coll : conv.inputs())
-    conv.setInputType(in_coll, TClass::GetClass(GetTypeName(in_coll).c_str()));
-  for (const auto& out_coll : conv.outputs())
-    conv.setOutputType(out_coll, TClass::GetClass(GetTypeName(out_coll).c_str()));
-  std::cout << ">>> added " << source << std::endl;
+  converters_.emplace_back(source);
   return *this;
 }
 
 void k4DataSource::SetNSlots(unsigned int nSlots) {
-  for (auto& reader : readers_)
+  for (auto& reader : readers_) {
+    for (const auto& conv : converters_)
+      reader->addConverter(conv);
     reader->setNumSlots(nSlots);
+    for (const auto& br : reader->branches())
+      if (std::find(column_names_.begin(), column_names_.end(), br) == column_names_.end())
+        column_names_.emplace_back(br);
+  }
   num_slots_ = nSlots;
 }
 
@@ -53,7 +51,7 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
   const std::string br_name(name);
   Record_t outputs;
   // first browse the list of conversion modules loaded in runtime
-  for (auto& col : converter_types_) {
+  /*for (auto& col : converters_) {
     if (col.first != name)
       continue;
     const auto& mod_inputs = col.second.converter().inputs();
@@ -65,16 +63,15 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
       const auto& input = mod_inputs.at(i);
       // read input branch, and return a vector of contents (one per slot)
       const auto& var_content = readBranch(input, ROOT::Internal::RDF::TypeName2TypeID(GetTypeName(input)));
-      for (size_t j = 0; j < num_slots_; ++j) {
-        inputs[j][i] = var_content.at(j);
-      }
+      for (size_t j = 0; j < num_slots_; ++j)
+        var_content.at(j).fill(inputs[j][i]);
     }
     for (const auto& input : inputs)  // one per slot
       outputs.emplace_back(col.second.apply(input).at(0).get());
     //FIXME also use other output collections if available
     return outputs;
-  }
-  // did not find in modules ; will look into the input file branches
+  }*/
+  // did not find in conversion modules ; will look into the input file branches
   for (const auto& rcd : readBranch(br_name, tid))  // possibly throw if not found
     outputs.emplace_back(rcd.get());
   return outputs;
@@ -84,22 +81,11 @@ bool k4DataSource::HasColumn(std::string_view col_name) const {
   for (const auto& col : column_names_)
     if (col == col_name)
       return true;
-  for (const auto& reader : readers_)
-    if (reader->has(std::string(col_name)))
-      return true;
   return false;
 }
 
 std::string k4DataSource::GetTypeName(std::string_view type) const {
   // first browse the columns build from a conversion module
-  for (const auto& col : converter_types_) {
-    if (col.first != type)
-      continue;
-    const auto& outputs = col.second.converter().outputs();
-    if (outputs.size() == 1)
-      return outputs.at(0);  //FIXME only supported mode for now
-    throw std::runtime_error("Unsupported output format providing " + std::to_string(outputs.size()) + " collections.");
-  }
   // then browse the input source columns
   std::string stype(type);
   for (const auto& reader : readers_)

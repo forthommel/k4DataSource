@@ -29,11 +29,11 @@ private:
   const k4Record& readBranch(const std::string&, const std::type_info&) const;
 
   size_t num_slots_{1};
+  std::vector<std::string> converters_;
   std::vector<std::unique_ptr<k4TreeReader> > readers_;
 
   // output source-oriented information
   std::vector<std::string> column_names_;
-  std::unordered_map<std::string, k4DataSourceItem> converter_types_;
 };
 
 /// A helper object to expose the data source to the outside world
