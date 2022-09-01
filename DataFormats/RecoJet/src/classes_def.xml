@@ -1,3 +1,4 @@
 <lcgdict>
   <class name="RecoJet"/>
+  <class name="std::vector<RecoJet>"/>
 </lcgdict>

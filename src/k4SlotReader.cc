@@ -47,7 +47,8 @@ k4SlotReader::k4SlotReader(const std::string& source,
       conv->setInputType(in_coll, TClass::GetClass(branches_.at(in_coll).type.c_str()));
     for (const auto& out_coll : conv->outputs()) {
       std::cout << ">>>>>>>>>> producing collection " << out_coll << std::endl;
-      branches_.insert(std::make_pair(out_coll, BranchInfo{out_coll, converter, {}}));
+      branches_.insert(std::make_pair(
+          out_coll, BranchInfo{out_coll, ROOT::Internal::RDF::TypeID2TypeName(conv->outputType(out_coll)), {}}));
       //conv.setOutputType(out_coll, TClass::GetClass(GetTypeName(out_coll).c_str()));
     }
     converters_[converter] = std::move(conv);

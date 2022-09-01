@@ -26,7 +26,7 @@ private:
   std::vector<std::string> branches_;
   std::vector<std::string> converters_;
   unsigned long long num_entries_{0ull};
-  size_t current_slot_;
+  size_t current_slot_{0};
 
   /// List of slots booked for the input trees chain readout
   std::vector<k4SlotReader> slots_;

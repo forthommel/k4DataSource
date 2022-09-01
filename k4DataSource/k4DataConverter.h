@@ -33,12 +33,13 @@ public:
   template <typename T>
   Handle<T> consumes(const std::string& label) {
     cols_in_.emplace_back(label);
-    inputs_[label] = Collection{new T(), nullptr, sizeof(T), typeid(T).hash_code()};
+    inputs_.insert(std::make_pair(label, Collection{new T(), nullptr, typeid(T), sizeof(T), typeid(T).hash_code()}));
     return Handle<T>(inputs_[label].collection);
   }
   /// Retrieve a list of input collections consumed by this module
   const std::vector<std::string>& inputs() const { return cols_in_; }
   void setInputType(const std::string& coll, TClass* type) { inputs_.at(coll).class_type = type; }
+  const std::type_info& inputType(const std::string& coll) const { return inputs_.at(coll).type_info; }
 
   /// Extract all collections produced by the algorithm
   std::vector<k4Handle> extract() const;
@@ -46,11 +47,12 @@ public:
   template <typename T>
   void produces(const std::string& label) {
     cols_out_.emplace_back(label);
-    outputs_[label] = Collection{new T(), nullptr, sizeof(T), typeid(T).hash_code()};
+    outputs_.insert(std::make_pair(label, Collection{new T(), nullptr, typeid(T), sizeof(T), typeid(T).hash_code()}));
   }
   /// Retrieve a list of output collections provided by this module
   const std::vector<std::string>& outputs() const { return cols_out_; }
   void setOutputType(const std::string& coll, TClass* type) { outputs_.at(coll).class_type = type; }
+  const std::type_info& outputType(const std::string& coll) const { return outputs_.at(coll).type_info; }
 
   /// Put the collection onto the event
   template <typename T>
@@ -82,6 +84,7 @@ private:
   struct Collection {
     k4Handle collection{nullptr};
     TClass* class_type{nullptr};
+    const std::type_info& type_info{typeid(int)};
     size_t size{0ull};
     size_t type{0ull};
   };
