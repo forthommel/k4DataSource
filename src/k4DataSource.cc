@@ -92,11 +92,6 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
                            "', neither in the input file nor in the list of converters.");
 }
 
-void k4DataSource::Finalise() {
-  for (auto& reader : readers_)
-    reader->finalise();
-}
-
 k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names,
                                    const std::vector<std::string>& column_names) {
   auto ds = std::make_unique<k4DataSource>(file_names, column_names);

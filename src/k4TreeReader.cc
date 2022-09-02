@@ -1,6 +1,5 @@
 #include <TChain.h>
 
-
 #include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4TreeReader.h"
 
@@ -77,5 +76,3 @@ std::vector<void*> k4TreeReader::read(const std::string& name, const std::type_i
     output.emplace_back(slots_.at(i).read(name, tid));
   return output;
 }
-
-void k4TreeReader::finalise() { slots_.clear(); }
