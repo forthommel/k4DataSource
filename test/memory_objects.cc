@@ -6,7 +6,7 @@
 TEST_CASE("k4DataSource", "[memory]") {
   SECTION("simple objects") {
     int test = 42, result;
-    k4Handle ptr(&test);
+    k4Record ptr(&test);
     ptr.fill(result);
     REQUIRE(result == test);
 
@@ -15,7 +15,7 @@ TEST_CASE("k4DataSource", "[memory]") {
   }
   SECTION("collections") {
     std::vector<double> test = {M_PI, 2.5}, result;
-    k4Handle ptr(&test);
+    k4Record ptr(&test);
     ptr.fill(result);
     REQUIRE(result == test);
 
@@ -32,7 +32,7 @@ TEST_CASE("k4DataSource", "[memory]") {
       int baz{42};
     };
     std::vector<Foo> foos(2), result;
-    k4Handle ptr(&foos);
+    k4Record ptr(&foos);
     ptr.fill(result);
     REQUIRE(result.size() == foos.size());
     REQUIRE(result == foos);

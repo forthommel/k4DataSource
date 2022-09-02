@@ -34,9 +34,9 @@ message(STATUS ${DATA_FORMATS})
 
 add_library(k4DataSource SHARED ${sources} ${headers} libk4DataSource.cxx)
 target_include_directories(k4DataSource PUBLIC ${CMAKE_SOURCE_DIR})
-target_link_libraries(k4DataSource ${DATA_FORMATS}
-                                   ROOT::ROOTDataFrame
-                                   EDM4HEP::edm4hep EDM4HEP::edm4hepDict)
+target_link_libraries(k4DataSource ROOT::ROOTDataFrame
+                                   EDM4HEP::edm4hep EDM4HEP::edm4hepDict
+                                   ${DATA_FORMATS})
 set_target_properties(k4DataSource PROPERTIES PUBLIC_HEADER "${headers}")
 install(TARGETS k4DataSource
         RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin

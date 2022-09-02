@@ -50,10 +50,26 @@ bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
 
 k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name, const std::type_info& tid) {
   const std::string br_name(name);
-  Record_t outputs;
-  for (const auto& rcd : readBranch(br_name, tid))  // possibly throw if not found
-    outputs.emplace_back(rcd.get());
-  return outputs;
+  // browse all input sources to find the branch with a given type
+  Record_t outputs(num_slots_, nullptr);
+  for (auto& reader : readers_) {
+    const auto& branches = reader->branches();
+    if (std::find(branches.begin(), branches.end(), br_name) == branches.end())
+      continue;
+    // input source was found, proceed with this one
+    const auto& out = reader->read(br_name, tid);
+    if (out.size() != num_slots_)
+      throw std::runtime_error("Expected " + std::to_string(num_slots_) + " value(s) and retrieved " +
+                               std::to_string(out.size()) + " for branch '" + br_name + "'.");
+    //return out;
+    for (size_t i = 0; i < num_slots_; ++i) {
+      size_t size = TClass::GetClass(ROOT::Internal::RDF::TypeID2TypeName(tid).c_str())->GetClassSize();
+      outputs.at(i) = new char[size];
+      out.at(i).fill(outputs[i]);
+    }
+    return outputs;
+  }
+  throw std::runtime_error("Failed to read branch name '" + br_name + "' from readers!");
 }
 
 bool k4DataSource::HasColumn(std::string_view col_name) const {
@@ -70,22 +86,6 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
       return reader->typeName(stype);
   throw std::runtime_error("Failed to retrieve a collection of type '" + stype +
                            "', neither in the input file nor in the list of converters.");
-}
-
-const k4Record& k4DataSource::readBranch(const std::string& branch_name, const std::type_info& tid) const {
-  // browse all input sources to find the branch with a given type
-  for (auto& reader : readers_) {
-    const auto& branches = reader->branches();
-    if (std::find(branches.begin(), branches.end(), branch_name) == branches.end())
-      continue;
-    // input source was found, proceed with this one
-    const auto& out = reader->read(branch_name, tid);
-    if (out.size() != num_slots_)
-      throw std::runtime_error("Expected " + std::to_string(num_slots_) + " value(s) and retrieved " +
-                               std::to_string(out.size()) + " for branch '" + branch_name + "'.");
-    return out;
-  }
-  throw std::runtime_error("Failed to read branch name '" + branch_name + "' from readers!");
 }
 
 k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names,

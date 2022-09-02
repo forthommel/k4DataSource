@@ -2,16 +2,15 @@
 #define k4DataSource_k4Record_h
 
 #include <memory>
-#include <vector>
 
-class k4Handle : public std::shared_ptr<void> {
+class k4Record : public std::shared_ptr<void> {
 public:
-  using std::shared_ptr<void>::shared_ptr;
-
+  k4Record() : std::shared_ptr<void>(nullptr, [](void*) {}) {}
+  k4Record(void* ptr) : std::shared_ptr<void>(ptr, [](void*) {}) {}
   template <typename T>
-  k4Handle(const std::shared_ptr<T>& ptr) : std::shared_ptr<void>(ptr.get()), size_(sizeof(T)) {}
+  k4Record(const std::shared_ptr<T>& ptr) : std::shared_ptr<void>(ptr.get(), [](void*) {}), size_(sizeof(T)) {}
   template <typename T>
-  k4Handle(T* ptr) : std::shared_ptr<void>(ptr, [](void*) {}), size_(sizeof(T)) {}
+  k4Record(T* ptr) : std::shared_ptr<void>(ptr, [](void*) {}), size_(sizeof(T)) {}
 
   template <typename T>
   T* getAs() {
@@ -27,21 +26,13 @@ public:
   }
 
   template <typename T>
-  const k4Handle& fill(T& out) const {
+  const k4Record& fill(T& out) const {
     out = operator*<T>();
     return *this;
   }
 
 private:
   size_t size_{0};
-};
-
-/// A collection of data records, one per slot
-struct k4Record : public std::vector<k4Handle> {
-  using std::vector<k4Handle>::vector;
-
-  template <typename T>
-  std::vector<T*> as() const;
 };
 
 #endif

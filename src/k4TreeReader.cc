@@ -41,6 +41,7 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
 
   // reset all readout chain and other metadata for slots list
   slots_.clear();
+  records_.clear();
   // add a TChain for each slot to be booked
   for (size_t i = 0; i < num_slots; ++i) {
     auto range = std::make_pair(i * expected_size,                           // beginning of range
@@ -48,6 +49,7 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
                                     + (i < num_slots - 1 ? 0ull : leftover)  // last bit gets the remaining events
     );
     slots_.emplace_back(source_, filenames_, converters_, range);
+    records_.emplace_back();
     if (i == 0)
       branches_ = slots_.back().branches();
     else if (slots_.back().branches().size() != branches_.size())
@@ -68,12 +70,11 @@ bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
   return slots_.at(slot).initEntry(entry);
 }
 
-k4Record k4TreeReader::read(const std::string& name, const std::type_info& tid) const {
+const std::vector<k4Record>& k4TreeReader::read(const std::string& name, const std::type_info& tid) {
   if (current_slot_ >= slots_.size())
     throw std::runtime_error("Invalid slot index requested:\n  maximal value: " + std::to_string(slots_.size() - 1) +
                              ",\n  got: " + std::to_string(current_slot_) + ".");
-  k4Record out;
-  for (auto& slot : slots_)
-    out.emplace_back(slot.read(name, tid));
-  return out;
+  for (size_t i = 0; i < slots_.size(); ++i)
+    records_.at(i) = slots_.at(i).read(name, tid);
+  return records_;
 }

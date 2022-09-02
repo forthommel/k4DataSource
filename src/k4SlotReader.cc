@@ -75,7 +75,7 @@ bool k4SlotReader::initEntry(unsigned long long event) {
   return ret > 0;
 }
 
-const k4Handle& k4SlotReader::read(const std::string& name, const std::type_info& tid) const {
+const k4Record& k4SlotReader::read(const std::string& name, const std::type_info& tid) const {
   const auto& req_tid = ROOT::Internal::RDF::TypeName2TypeID(branches_.at(name).type);  // NO copy
   if (req_tid != tid)
     throw std::runtime_error("Invalid type requested for column '" + name + "':\n  expected " + req_tid.name() +
@@ -89,7 +89,7 @@ const k4Handle& k4SlotReader::read(const std::string& name, const std::type_info
     conv->describe();
     // found corresponding module ; will start conversion of inputs
     const auto& mod_inputs = conv->inputs();
-    std::vector<k4Handle> inputs(mod_inputs.size(), nullptr);
+    std::vector<k4Record> inputs(mod_inputs.size(), nullptr);
     for (size_t i = 0; i < mod_inputs.size(); ++i)
       inputs[i] = read(mod_inputs.at(i), conv->inputType(mod_inputs.at(i)));
     conv->feed(inputs);

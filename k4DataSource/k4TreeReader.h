@@ -18,7 +18,7 @@ public:
   /// \param[in] entry event identifier
   bool initEntry(size_t slot, unsigned long long entry);
   std::vector<k4SlotReader::EventRange> ranges() const;
-  k4Record read(const std::string&, const std::type_info&) const;
+  const std::vector<k4Record>& read(const std::string&, const std::type_info&);
 
 private:
   const std::string source_{};
@@ -30,6 +30,7 @@ private:
 
   /// List of slots booked for the input trees chain readout
   std::vector<k4SlotReader> slots_;
+  std::vector<k4Record> records_;
 };
 
 #endif

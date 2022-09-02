@@ -25,7 +25,6 @@ public:
 
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;
-  const k4Record& readBranch(const std::string&, const std::type_info&) const;
 
   size_t num_slots_{1};
   std::vector<std::string> converters_;
