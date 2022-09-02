@@ -98,7 +98,6 @@ void* k4SlotReader::read(const std::string& name, const std::type_info& tid) con
     if (std::find(mod_outputs.begin(), mod_outputs.end(), name) == mod_outputs.end())
       continue;
     // found corresponding module ; will start conversion of inputs
-    conv->describe();
     return conv->extract().at(name);
   }
   // then check if the input tree has the corresponding branch
