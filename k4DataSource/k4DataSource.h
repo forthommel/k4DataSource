@@ -19,6 +19,7 @@ public:
   std::string GetTypeName(std::string_view) const override;
 
   void SetNSlots(unsigned int) override;
+  void InitSlot(unsigned int, unsigned long long) override;
   void Initialise() override;
   std::vector<std::pair<unsigned long long, unsigned long long> > GetEntryRanges() override;
   bool SetEntry(unsigned int, unsigned long long) override;
@@ -27,6 +28,7 @@ private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;
 
   size_t num_slots_{1};
+  bool retrieved_ranges_{false};
   std::vector<std::string> converters_;
   std::vector<std::unique_ptr<k4TreeReader> > readers_;
 

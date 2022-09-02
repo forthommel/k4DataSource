@@ -7,7 +7,7 @@ files = ['root://eospublic.cern.ch//eos/experiment/fcc/ee/generation/DelphesEven
 df = ROOT.MakeK4DataFrame(files, ['RecoJets'])
 
 branches = ROOT.vector('string')()
-for br in ['RecoJets']:
+for br in ['jets']:
     branches.push_back(br)
 
 df.Snapshot('events', 'test.root', branches)

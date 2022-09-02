@@ -16,28 +16,39 @@ k4DataSource& k4DataSource::addSource(const std::string& source) {
   return *this;
 }
 
-void k4DataSource::SetNSlots(unsigned int nSlots) {
+void k4DataSource::SetNSlots(unsigned int num_slots) {
   for (auto& reader : readers_) {
     for (const auto& conv : converters_)
       reader->addConverter(conv);
-    reader->setNumSlots(nSlots);
+    reader->setNumSlots(num_slots);
     for (const auto& br : reader->branches())
       if (std::find(column_names_.begin(), column_names_.end(), br) == column_names_.end())
         column_names_.emplace_back(br);
   }
-  num_slots_ = nSlots;
+  num_slots_ = num_slots;
 }
 
-void k4DataSource::Initialise() {}
+void k4DataSource::InitSlot(unsigned int slot, unsigned long long entry) {
+  for (auto& reader : readers_)
+    reader->initSlot(slot, entry);
+}
+
+void k4DataSource::Initialise() {
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
+  retrieved_ranges_ = false;
+}
 
 std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::GetEntryRanges() {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
-  std::vector<std::pair<unsigned long long, unsigned long long> > out;
+  std::vector<std::pair<unsigned long long, unsigned long long> > ranges;
+  if (retrieved_ranges_)
+    return ranges;
+
   for (const auto& reader : readers_)
     for (const auto& range : reader->ranges())
-      if (std::find(out.begin(), out.end(), range) == out.end())
-        out.emplace_back(range);
-  return out;
+      if (std::find(ranges.begin(), ranges.end(), range) == ranges.end())
+        ranges.emplace_back(range);
+  retrieved_ranges_ = true;
+  return ranges;
 }
 
 bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
@@ -51,7 +62,7 @@ bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
 k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name, const std::type_info& tid) {
   const std::string br_name(name);
   // browse all input sources to find the branch with a given type
-  Record_t outputs(num_slots_, nullptr);
+  Record_t outputs;
   for (auto& reader : readers_) {
     const auto& branches = reader->branches();
     if (std::find(branches.begin(), branches.end(), br_name) == branches.end())
@@ -61,13 +72,7 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
     if (out.size() != num_slots_)
       throw std::runtime_error("Expected " + std::to_string(num_slots_) + " value(s) and retrieved " +
                                std::to_string(out.size()) + " for branch '" + br_name + "'.");
-    //return out;
-    for (size_t i = 0; i < num_slots_; ++i) {
-      size_t size = TClass::GetClass(ROOT::Internal::RDF::TypeID2TypeName(tid).c_str())->GetClassSize();
-      outputs.at(i) = new char[size];
-      out.at(i).fill(outputs[i]);
-    }
-    return outputs;
+    return out;
   }
   throw std::runtime_error("Failed to read branch name '" + br_name + "' from readers!");
 }

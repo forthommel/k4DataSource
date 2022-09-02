@@ -13,12 +13,13 @@ public:
   const std::string& typeName(const std::string&) const;
 
   void setNumSlots(size_t);
+  void initSlot(size_t, unsigned long long);
   /// Initialise the readout of branches
   /// \param[in] slot unique slot identifier
   /// \param[in] entry event identifier
   bool initEntry(size_t slot, unsigned long long entry);
   std::vector<k4SlotReader::EventRange> ranges() const;
-  const std::vector<k4Record>& read(const std::string&, const std::type_info&);
+  std::vector<void*> read(const std::string&, const std::type_info&) const;
 
 private:
   const std::string source_{};
@@ -26,11 +27,10 @@ private:
   std::vector<std::string> branches_;
   std::vector<std::string> converters_;
   unsigned long long num_entries_{0ull};
-  size_t current_slot_{0};
 
   /// List of slots booked for the input trees chain readout
   std::vector<k4SlotReader> slots_;
-  std::vector<k4Record> records_;
+  std::vector<void*> records_;
 };
 
 #endif

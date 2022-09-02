@@ -25,16 +25,16 @@ protected:
 
   /// A collection translation unit
   template <typename T>
-  class Handle : public std::shared_ptr<T> {
+  class Handle : public std::unique_ptr<T> {
   public:
-    using std::shared_ptr<T>::shared_ptr;
-    explicit Handle(void*& ptr) : std::shared_ptr<T>(static_cast<T*>(ptr)) {}
+    using std::unique_ptr<T>::unique_ptr;
+    explicit Handle(void*& ptr) : std::unique_ptr<T>(static_cast<T*>(ptr)) {}
     virtual ~Handle() = default;
   };
 
 public:
   /// Feed the algorithm a set of input values
-  void feed(const std::vector<k4Record>&);
+  void feed(const std::vector<void*>&);
   /// Declare an input collection to be consumed by the algorithm
   template <typename T>
   Handle<T> consumes(const std::string& label) {
@@ -48,7 +48,7 @@ public:
   const std::type_info& inputType(const std::string& coll) const { return inputs_.at(coll).type_info; }
 
   /// Extract all collections produced by the algorithm
-  std::vector<k4Record> extract() const;
+  std::unordered_map<std::string, void*> extract() const;
   /// Declare an output collection to be produced by the algorithm
   template <typename T>
   void produces(const std::string& label) {
@@ -58,22 +58,20 @@ public:
   /// Retrieve a list of output collections provided by this module
   const std::vector<std::string>& outputs() const { return cols_out_; }
   const std::type_info& outputType(const std::string& coll) const { return outputs_.at(coll).type_info; }
+  void* output(const std::string& coll) const { return outputs_.at(coll).collection; }
 
   /// Put the collection onto the event
   template <typename T>
   void put(std::unique_ptr<T> coll, const std::string& label = "") {
-    put(coll.get(), label);
-  }
-  /// Put the collection onto the event
-  template <typename T>
-  void put(const T* coll, const std::string& label = "") {
     if (!label.empty()) {
-      std::memcpy(outputs_.at(label).collection, coll, sizeof(T));
+      if (outputs_.count(label) == 0)
+        throwFailedToPut(typeid(T), label);
+      std::memcpy(outputs_.at(label).collection, coll.get(), sizeof(T));
       return;
     }
     for (const auto& output : outputs_)
       if (output.second.type == typeid(T).hash_code()) {
-        std::memcpy(output.second.collection, coll, sizeof(T));
+        std::memcpy(output.second.collection, coll.get(), sizeof(T));
         return;
       }
     throwFailedToPut(typeid(T), label);

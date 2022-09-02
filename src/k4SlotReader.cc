@@ -19,16 +19,17 @@ k4SlotReader::k4SlotReader(const std::string& source,
     const auto type_name =
         ROOT::Internal::RDF::ColumnName2ColumnTypeName(branch_name, chain_.get(), nullptr, nullptr, false);
     TClass::GetClass(type_name.c_str());  // just in case supporting library is not yet added
-    branches_.insert(std::make_pair(branch_name, BranchInfo{branch_name, type_name, nullptr}));
+    branches_.insert(std::make_pair(branch_name, BranchInfo{true, branch_name, type_name, nullptr}));
     auto& branch_info = branches_.at(branch_name);
     auto* type_class = TClass::GetClass(branch_info.type.c_str());
     if (!type_class)
       throw std::runtime_error("Output format '" + branch_info.type + "' is not defined for branch '" +
                                branch_info.name + "'. Please generate the readout dictionary accordingly.");
+    auto& addr = branch_info.address;
     chain_->SetBranchAddress(
         // linking pre-booked memory to tree contents
         branch_info.name.c_str(),
-        &branches_.at(branch_name).address,
+        &addr,
         type_class,
         EDataType::kNoType_t,
         true);
@@ -36,12 +37,12 @@ k4SlotReader::k4SlotReader(const std::string& source,
   }
   for (const auto& converter : converters) {
     auto conv = k4DataConverterFactory::get().build(converter);
-    std::cout << ">>> added " << converter << std::endl;
     for (const auto& out_coll : conv->outputs()) {
-      std::cout << ">>>>>>>>>> producing collection " << out_coll << std::endl;
-      branches_.insert(std::make_pair(
-          out_coll, BranchInfo{out_coll, ROOT::Internal::RDF::TypeID2TypeName(conv->outputType(out_coll)), nullptr}));
-      //conv.setOutputType(out_coll, TClass::GetClass(GetTypeName(out_coll).c_str()));
+      branches_.insert(std::make_pair(out_coll,
+                                      BranchInfo{false,
+                                                 out_coll,
+                                                 ROOT::Internal::RDF::TypeID2TypeName(conv->outputType(out_coll)),
+                                                 conv->output(out_coll)}));
     }
     converters_[converter] = std::move(conv);
   }
@@ -69,13 +70,15 @@ bool k4SlotReader::initEntry(unsigned long long event) {
     std::cout << "Warning: requesting event outside [" << range_.first << ", " << range_.second << "[ range";
     return false;
   }
-  //if (entry == 0 || entry != current_entry_.at(slot)) {
+  std::cout << __PRETTY_FUNCTION__ << "::: " << event << std::endl;
+  if (event > 0 && event == current_event_)
+    return true;
   auto ret = chain_->GetEntry(event);
-  current_entry_ = event;
+  current_event_ = event;
   return ret > 0;
 }
 
-const k4Record& k4SlotReader::read(const std::string& name, const std::type_info& tid) const {
+void* k4SlotReader::read(const std::string& name, const std::type_info& tid) const {
   const auto& req_tid = ROOT::Internal::RDF::TypeName2TypeID(branches_.at(name).type);  // NO copy
   if (req_tid != tid)
     throw std::runtime_error("Invalid type requested for column '" + name + "':\n  expected " + req_tid.name() +
@@ -89,20 +92,23 @@ const k4Record& k4SlotReader::read(const std::string& name, const std::type_info
     conv->describe();
     // found corresponding module ; will start conversion of inputs
     const auto& mod_inputs = conv->inputs();
-    std::vector<k4Record> inputs(mod_inputs.size(), nullptr);
-    for (size_t i = 0; i < mod_inputs.size(); ++i)
-      inputs[i] = read(mod_inputs.at(i), conv->inputType(mod_inputs.at(i)));
+    std::vector<void*> inputs(mod_inputs.size(), nullptr);
+    for (size_t i = 0; i < mod_inputs.size(); ++i) {
+      const auto& info = branchInfo(mod_inputs.at(i));
+      if (info.in_tree)
+        inputs[i] = info.address;  // first browse the input tree branches
+      else
+        inputs[i] = read(mod_inputs.at(i), conv->inputType(mod_inputs.at(i)));  // then check the converters
+    }
     conv->feed(inputs);
     conv->convert();
-    const auto& outputs = conv->extract();
-    //FIXME also use other output collections if available
-    return outputs.at(0);
+    return conv->extract().at(name);
   }
   // then check if the input tree has the corresponding branch
   if (branches_.count(name) > 0) {
     if (!branches_.at(name).address)
       throw std::runtime_error("Failed to retrieve branch '" + name + "' from input tree.");
-    return branches_.at(name).address;
+    return (void*)&branches_.at(name).address;
   }
   // otherwise, throw
   throw std::runtime_error("Failed to retrieve column '" + name +

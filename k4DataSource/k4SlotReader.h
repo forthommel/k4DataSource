@@ -21,9 +21,10 @@ public:
 
   /// Metadata and memory accessor for all branches
   struct BranchInfo {
-    std::string name;           ///< Branch name
-    std::string type;           ///< Human-readable branch content type
-    k4Record address{nullptr};  ///< Branch address
+    bool in_tree{false};     ///< Is the branch collected from the tree or produced by a converter?
+    std::string name;        ///< Branch name
+    std::string type;        ///< Human-readable branch content type
+    void* address{nullptr};  ///< Branch address
   };
 
   /// List of branch names
@@ -31,18 +32,16 @@ public:
   const BranchInfo& branchInfo(const std::string&) const;
 
   bool initEntry(unsigned long long);
-  const k4Record& read(const std::string&, const std::type_info&) const;
+  void* read(const std::string&, const std::type_info&) const;
   const EventRange& range() const { return range_; }
 
 private:
   const EventRange range_;                                ///< Range of event numbers
   std::unique_ptr<TChain> chain_;                         ///< Readout chain for tree collection
   std::unordered_map<std::string, BranchInfo> branches_;  ///< Branches memory booking and metadata
-  unsigned long long current_entry_{0ull};                ///< Current event being analysed
   /// Data collections converters
   std::unordered_map<std::string, std::unique_ptr<k4DataConverter> > converters_;
-  /// Collection of undocumented (= floats) addresses
-  std::vector<std::unique_ptr<double> > dangling_ptrs_;
+  unsigned long long current_event_{0ull};  ///< Current event being analysed
 };
 
 #endif

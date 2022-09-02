@@ -8,22 +8,21 @@
 
 k4DataConverter::k4DataConverter() {}
 
-void k4DataConverter::feed(const std::vector<k4Record>& input) {
+void k4DataConverter::feed(const std::vector<void*>& input) {
   if (input.size() != cols_in_.size())
     throw std::runtime_error("Invalid inputs multiplicity:\n  expected: " + std::to_string(cols_in_.size()) +
                              ",\n  got: " + std::to_string(input.size()) + ".");
   for (size_t i = 0; i < cols_in_.size(); ++i) {
     //inputs_[cols_in_.at(i)].collection = input.at(i);
-    memcpy(inputs_.at(cols_in_.at(i)).collection, input.at(i).get(), inputs_.at(cols_in_.at(i)).size);
+    std::memcpy(inputs_.at(cols_in_.at(i)).collection, input.at(i), inputs_.at(cols_in_.at(i)).size);
     std::cout << i << ":::" << input.at(i) << "=>" << inputs_.at(cols_in_.at(i)).collection << std::endl;
   }
 }
 
-std::vector<k4Record> k4DataConverter::extract() const {
-  std::vector<k4Record> out;
+std::unordered_map<std::string, void*> k4DataConverter::extract() const {
+  std::unordered_map<std::string, void*> out;
   for (const auto& var : cols_out_) {
-    out.emplace_back(new char[outputs_.at(var).size]);
-    memcpy(out.back().get(), outputs_.at(var).collection, outputs_.at(var).size);
+    out[var] = (void*)&outputs_.at(var).collection;
   }
   return out;
 }
