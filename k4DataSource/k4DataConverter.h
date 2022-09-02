@@ -2,11 +2,10 @@
 #define k4DataSource_k4DataConverter_h
 
 #include <cstring>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "k4DataSource/k4Record.h"
 
 class TClass;
 
@@ -14,7 +13,7 @@ class TClass;
 class k4DataConverter {
 public:
   k4DataConverter();
-  virtual ~k4DataConverter() = default;
+  virtual ~k4DataConverter();
 
   /// User-defined collection building
   virtual void convert() = 0;
@@ -29,7 +28,7 @@ protected:
   public:
     using std::unique_ptr<T>::unique_ptr;
     explicit Handle(void*& ptr) : std::unique_ptr<T>(static_cast<T*>(ptr)) {}
-    virtual ~Handle() = default;
+    virtual ~Handle() { std::unique_ptr<T>::release(); }
   };
 
 public:

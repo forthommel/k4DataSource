@@ -8,22 +8,23 @@
 
 k4DataConverter::k4DataConverter() {}
 
+k4DataConverter::~k4DataConverter() {
+  for (auto& out : outputs_)
+    out.second.collection = nullptr;
+}
+
 void k4DataConverter::feed(const std::vector<void*>& input) {
   if (input.size() != cols_in_.size())
     throw std::runtime_error("Invalid inputs multiplicity:\n  expected: " + std::to_string(cols_in_.size()) +
                              ",\n  got: " + std::to_string(input.size()) + ".");
-  for (size_t i = 0; i < cols_in_.size(); ++i) {
-    //inputs_[cols_in_.at(i)].collection = input.at(i);
+  for (size_t i = 0; i < cols_in_.size(); ++i)
     std::memcpy(inputs_.at(cols_in_.at(i)).collection, input.at(i), inputs_.at(cols_in_.at(i)).size);
-    std::cout << i << ":::" << input.at(i) << "=>" << inputs_.at(cols_in_.at(i)).collection << std::endl;
-  }
 }
 
 std::unordered_map<std::string, void*> k4DataConverter::extract() const {
   std::unordered_map<std::string, void*> out;
-  for (const auto& var : cols_out_) {
+  for (const auto& var : cols_out_)
     out[var] = (void*)&outputs_.at(var).collection;
-  }
   return out;
 }
 

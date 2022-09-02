@@ -20,6 +20,7 @@ public:
   bool initEntry(size_t slot, unsigned long long entry);
   std::vector<k4SlotReader::EventRange> ranges() const;
   std::vector<void*> read(const std::string&, const std::type_info&) const;
+  void finalise();
 
 private:
   const std::string source_{};

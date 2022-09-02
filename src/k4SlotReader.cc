@@ -1,7 +1,6 @@
 #include <TChain.h>
 
 #include <ROOT/RDF/Utils.hxx>
-#include <iostream>
 
 #include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4DataConverterFactory.h"
@@ -46,7 +45,6 @@ k4SlotReader::k4SlotReader(const std::string& source,
     }
     converters_[converter] = std::move(conv);
   }
-  chain_->GetEntry(range_.first);  // start by loading the first entry into memory
 }
 
 std::vector<std::string> k4SlotReader::branches() const {
@@ -66,15 +64,25 @@ const k4SlotReader::BranchInfo& k4SlotReader::branchInfo(const std::string& bran
 }
 
 bool k4SlotReader::initEntry(unsigned long long event) {
-  if (event < range_.first || event >= range_.second) {
-    std::cout << "Warning: requesting event outside [" << range_.first << ", " << range_.second << "[ range";
-    return false;
-  }
-  std::cout << __PRETTY_FUNCTION__ << "::: " << event << std::endl;
-  if (event > 0 && event == current_event_)
-    return true;
+  if (event < range_.first || event >= range_.second)
+    throw std::runtime_error("Requesting event outside [" + std::to_string(range_.first) + ", " +
+                             std::to_string(range_.second) + "[ range");
   auto ret = chain_->GetEntry(event);
   current_event_ = event;
+  for (auto& col : converters_) {
+    auto& conv = col.second;
+    // prepare all input collections for the converter
+    std::vector<void*> inputs;
+    for (const auto& input : conv->inputs()) {
+      const auto& info = branchInfo(input);
+      inputs.emplace_back(info.in_tree ? info.address                         // first browse the input tree branches
+                                       : read(input, conv->inputType(input))  // then check the converters outputs
+      );
+    }
+    // launch the conversion
+    conv->feed(inputs);
+    conv->convert();
+  }
   return ret > 0;
 }
 
@@ -89,19 +97,8 @@ void* k4SlotReader::read(const std::string& name, const std::type_info& tid) con
     const auto& mod_outputs = conv->outputs();
     if (std::find(mod_outputs.begin(), mod_outputs.end(), name) == mod_outputs.end())
       continue;
-    conv->describe();
     // found corresponding module ; will start conversion of inputs
-    const auto& mod_inputs = conv->inputs();
-    std::vector<void*> inputs(mod_inputs.size(), nullptr);
-    for (size_t i = 0; i < mod_inputs.size(); ++i) {
-      const auto& info = branchInfo(mod_inputs.at(i));
-      if (info.in_tree)
-        inputs[i] = info.address;  // first browse the input tree branches
-      else
-        inputs[i] = read(mod_inputs.at(i), conv->inputType(mod_inputs.at(i)));  // then check the converters
-    }
-    conv->feed(inputs);
-    conv->convert();
+    conv->describe();
     return conv->extract().at(name);
   }
   // then check if the input tree has the corresponding branch

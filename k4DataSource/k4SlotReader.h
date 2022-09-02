@@ -1,10 +1,9 @@
 #ifndef k4DataSource_k4SlotReader_h
 #define k4DataSource_k4SlotReader_h
 
+#include <memory>
 #include <unordered_map>
 #include <vector>
-
-#include "k4DataSource/k4Record.h"
 
 class TChain;
 class k4DataConverter;

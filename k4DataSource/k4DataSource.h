@@ -23,6 +23,7 @@ public:
   void Initialise() override;
   std::vector<std::pair<unsigned long long, unsigned long long> > GetEntryRanges() override;
   bool SetEntry(unsigned int, unsigned long long) override;
+  void Finalise() override;
 
 private:
   Record_t GetColumnReadersImpl(std::string_view name, const std::type_info&) override;

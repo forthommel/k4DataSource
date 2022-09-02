@@ -52,7 +52,6 @@ std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::Ge
 }
 
 bool k4DataSource::SetEntry(unsigned int slot, unsigned long long entry) {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
   for (auto& reader : readers_)
     if (!reader->initEntry(slot, entry))
       return false;
@@ -91,6 +90,11 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
       return reader->typeName(stype);
   throw std::runtime_error("Failed to retrieve a collection of type '" + stype +
                            "', neither in the input file nor in the list of converters.");
+}
+
+void k4DataSource::Finalise() {
+  for (auto& reader : readers_)
+    reader->finalise();
 }
 
 k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names,
