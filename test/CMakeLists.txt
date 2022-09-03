@@ -17,5 +17,8 @@ file(GLOB py_tests *.py)
 foreach(_t ${py_tests})
   set(test_name "py_${_t}")
   add_test(NAME ${test_name} COMMAND python ${_t})
-  set_tests_properties(${test_name} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+  set_tests_properties(${test_name}
+                       PROPERTIES
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+                       ENVIRONMENT PATH=${CMAKE_INSTALL_PREFIX}/python)
 endforeach()
