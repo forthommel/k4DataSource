@@ -9,5 +9,4 @@
 #include <vector>
 
 #include "k4DataSource/k4DataSource.h"
-#include "k4DataSource/k4Handle.h"
 #include "k4DataSource/k4Parameters.h"

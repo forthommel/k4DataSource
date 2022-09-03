@@ -9,5 +9,6 @@ def Converter(name, *args, **kwargs):
     for k, v in kwargs.items():
         params.set(k, v)
     print(params.serialise())
-    conv = ROOT.k4DataConverterFactory.get().build(name, params)
+    conv = ROOT.k4DataConverterFactory.get().build(params)
+    conv.describe()
     return conv

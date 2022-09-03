@@ -8,6 +8,5 @@
   <class name="std::vector<edm4hep::TrackState>"/>
 
   <class name="k4DataSource"/>
-  <class name="k4Handle"/>
   <class name="k4Parameters"/>
 </lcgdict>
