@@ -1,4 +1,4 @@
-
+#include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4DataConverterFactory.h"
 #include "k4DataSource/k4DataSource.h"
 
@@ -8,11 +8,17 @@ k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std:
     std::cout << "... " << conv << std::endl;
 
   for (const auto& col : columns_list)
-    addSource(col);
+    addSource(k4Parameters().setName(col));
 }
 
-k4DataSource& k4DataSource::addSource(const std::string& source) {
-  converters_.emplace_back(source);
+k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std::vector<k4DataConverter>& converters) {
+  readers_.emplace_back(std::make_unique<k4TreeReader>("events", filenames));
+  for (const auto& converter : converters)
+    addSource(converter.parameters());
+}
+
+k4DataSource& k4DataSource::addSource(const k4Parameters& params) {
+  converters_.emplace_back(params);
   return *this;
 }
 
@@ -33,10 +39,7 @@ void k4DataSource::InitSlot(unsigned int slot, unsigned long long entry) {
     reader->initSlot(slot, entry);
 }
 
-void k4DataSource::Initialise() {
-  std::cout << __PRETTY_FUNCTION__ << std::endl;
-  retrieved_ranges_ = false;
-}
+void k4DataSource::Initialise() { retrieved_ranges_ = false; }
 
 std::vector<std::pair<unsigned long long, unsigned long long> > k4DataSource::GetEntryRanges() {
   std::vector<std::pair<unsigned long long, unsigned long long> > ranges;
@@ -95,6 +98,13 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
 k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names,
                                    const std::vector<std::string>& column_names) {
   auto ds = std::make_unique<k4DataSource>(file_names, column_names);
+  ROOT::RDataFrame df(std::move(ds));
+  return k4DataFrameHandler(std::move(df));
+}
+
+k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names,
+                                   const std::vector<k4DataConverter>& converters) {
+  auto ds = std::make_unique<k4DataSource>(file_names, converters);
   ROOT::RDataFrame df(std::move(ds));
   return k4DataFrameHandler(std::move(df));
 }

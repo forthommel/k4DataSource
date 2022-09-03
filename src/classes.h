@@ -8,4 +8,6 @@
 
 #include <vector>
 
+#include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4DataSource.h"
+#include "k4DataSource/k4Parameters.h"

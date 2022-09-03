@@ -34,20 +34,20 @@ public:
                   "\n\n  *** Failed to register an object with improper inheritance into the factory. ***\n");
     converters_[name] = &build<T>;
   }
-  /// Build a data formatter with a given name
-  std::unique_ptr<k4DataConverter> build(const std::string& name) const;
+  /// Build a data formatter with a given set of parameters
+  std::unique_ptr<k4DataConverter> build(const k4Parameters& = k4Parameters()) const;
 
 private:
   k4DataConverterFactory() {}
 
   /// Recipe to build a data formatter
   template <typename T>
-  static inline std::unique_ptr<k4DataConverter> build() {
-    return std::unique_ptr<k4DataConverter>(new T);
+  static inline std::unique_ptr<k4DataConverter> build(const k4Parameters& params) {
+    return std::unique_ptr<k4DataConverter>(new T(params));
   }
 
   /// Mockup of a data formatter constructor
-  typedef std::unique_ptr<k4DataConverter> (*Converter)();
+  typedef std::unique_ptr<k4DataConverter> (*Converter)(const k4Parameters&);
   /// A collection of data formatters builders
   std::unordered_map<std::string, Converter> converters_;
 };

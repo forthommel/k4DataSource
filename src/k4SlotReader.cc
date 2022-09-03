@@ -4,11 +4,12 @@
 
 #include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4DataConverterFactory.h"
+#include "k4DataSource/k4Parameters.h"
 #include "k4DataSource/k4SlotReader.h"
 
 k4SlotReader::k4SlotReader(const std::string& source,
                            const std::vector<std::string>& filenames,
-                           const std::vector<std::string>& converters,
+                           const std::vector<k4Parameters>& converters,
                            const EventRange& range)
     : range_(range), chain_(new TChain(source.c_str())) {
   for (const auto& filename : filenames)
@@ -43,7 +44,8 @@ k4SlotReader::k4SlotReader(const std::string& source,
                                                  ROOT::Internal::RDF::TypeID2TypeName(conv->outputType(out_coll)),
                                                  conv->output(out_coll)}));
     }
-    converters_[converter] = std::move(conv);
+    conv->describe();
+    converters_[converter.name<std::string>()] = std::move(conv);
   }
 }
 

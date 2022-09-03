@@ -8,7 +8,7 @@ public:
   explicit k4TreeReader(const std::string&, const std::vector<std::string>&);
 
   bool has(const std::string&) const;
-  inline void addConverter(const std::string& converter) { converters_.emplace_back(converter); }
+  inline void addConverter(const k4Parameters& converter) { converters_.emplace_back(converter); }
   inline const std::vector<std::string>& branches() const { return branches_; }
   const std::string& typeName(const std::string&) const;
 
@@ -25,7 +25,7 @@ private:
   const std::string source_{};
   const std::vector<std::string> filenames_{};
   std::vector<std::string> branches_;
-  std::vector<std::string> converters_;
+  std::vector<k4Parameters> converters_;
   unsigned long long num_entries_{0ull};
 
   /// List of slots booked for the input trees chain readout
