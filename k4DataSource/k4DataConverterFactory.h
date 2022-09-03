@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "k4DataSource/k4DataConverter.h"
-#include "k4DataSource/k4Parameters.h"
 
 #define BUILDERNM(obj) obj##Builder
 #define REGISTER_CONVERTER(name, obj)                                                \

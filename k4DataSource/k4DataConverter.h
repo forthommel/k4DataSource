@@ -6,13 +6,16 @@
 #include <unordered_map>
 #include <vector>
 
+#include "k4DataSource/k4Parameters.h"
+
 class TClass;
 
 /// A base algorithm for the production of event collections
 class k4DataConverter {
 public:
-  k4DataConverter();
+  explicit k4DataConverter(const k4Parameters&);
 
+  const k4Parameters& parameters() const { return params_; }
   /// User-defined collection building
   virtual void convert() {}
 
@@ -77,6 +80,7 @@ public:
   void describe() const;
 
 private:
+  k4Parameters params_;
   std::vector<std::string> cols_in_;
   std::vector<std::string> cols_out_;
 

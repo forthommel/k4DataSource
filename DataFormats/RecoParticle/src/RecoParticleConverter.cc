@@ -7,7 +7,8 @@
 class RecoParticlesConverter : public k4DataConverter {
 public:
   RecoParticlesConverter(const k4Parameters& params)
-      : h_reco_parts_(consumes<std::vector<edm4hep::ReconstructedParticleData> >(
+      : k4DataConverter(params),
+        h_reco_parts_(consumes<std::vector<edm4hep::ReconstructedParticleData> >(
             params.get<std::string>("src", "ReconstructedParticles"))) {
     produces<std::vector<RecoParticle> >(params.get<std::string>("output", "recoParticles"));
   }

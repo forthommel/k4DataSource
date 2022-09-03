@@ -5,9 +5,8 @@
 #include <stdexcept>
 
 #include "k4DataSource/k4DataConverter.h"
-#include "k4DataSource/k4Parameters.h"
 
-k4DataConverter::k4DataConverter() {}
+k4DataConverter::k4DataConverter(const k4Parameters& params) : params_(params) {}
 
 void k4DataConverter::feed(const std::vector<void*>& input) {
   if (input.size() != cols_in_.size())

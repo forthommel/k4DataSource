@@ -8,7 +8,8 @@
 class RecoJetsConverter : public k4DataConverter {
 public:
   explicit RecoJetsConverter(const k4Parameters& params)
-      : h_jets_(consumes<std::vector<edm4hep::ReconstructedParticleData> >(params.get<std::string>("src", "Jet"))),
+      : k4DataConverter(params),
+        h_jets_(consumes<std::vector<edm4hep::ReconstructedParticleData> >(params.get<std::string>("src", "Jet"))),
         h_reco_parts_(consumes<std::vector<RecoParticle> >(params.get<std::string>("rpLabel", "recoParticles"))) {
     produces<std::vector<RecoJet> >(params.get<std::string>("output", "jets"));
   }
