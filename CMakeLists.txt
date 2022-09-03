@@ -23,6 +23,7 @@ find_package(EDM4HEP REQUIRED)
 
 file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${CMAKE_SOURCE_DIR}/k4DataSource/*.h)
+file(GLOB python_files ${CMAKE_SOURCE_DIR}/python/*.py)
 
 file(GLOB reflex_cl ${CMAKE_SOURCE_DIR}/src/classes.h)
 file(GLOB reflex_sel ${CMAKE_SOURCE_DIR}/src/classes_def.xml)
@@ -46,11 +47,13 @@ install(TARGETS k4DataSource
         LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
         PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/k4DataSource")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libk4DataSource.rootmap"
-              DESTINATION "${INSTALL_LIB_DIR}")
+        DESTINATION "${INSTALL_LIB_DIR}")
 if(${ROOT_VERSION} GREATER 6)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libk4DataSource_rdict.pcm"
           DESTINATION "${INSTALL_LIB_DIR}")
 endif()
+install(FILES ${python_files}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/python")
 
 if(BUILD_TESTING)
   include(CatchInclude)
