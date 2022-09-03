@@ -13,11 +13,8 @@ k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std:
 
 k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std::vector<k4DataConverter>& converters) {
   readers_.emplace_back(std::make_unique<k4TreeReader>("events", filenames));
-  /*for (const auto& conv : k4DataConverterFactory::get().converters())
-    std::cout << "... " << conv << std::endl;
-
-  for (const auto& col : columns_list)
-    addSource(col);*/
+  for (const auto& converter : converters)
+    addSource(converter.parameters());
 }
 
 k4DataSource& k4DataSource::addSource(const k4Parameters& params) {
