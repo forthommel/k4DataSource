@@ -7,6 +7,7 @@
 
 class TChain;
 class k4DataConverter;
+class k4Parameters;
 
 /// Chain readout and metadata container for a readout slot
 class k4SlotReader {
@@ -15,7 +16,7 @@ public:
 
   explicit k4SlotReader(const std::string&,
                         const std::vector<std::string>&,
-                        const std::vector<std::string>&,
+                        const std::vector<k4Parameters>&,
                         const EventRange&);
 
   /// Metadata and memory accessor for all branches

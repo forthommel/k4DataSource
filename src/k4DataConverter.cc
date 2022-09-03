@@ -5,13 +5,9 @@
 #include <stdexcept>
 
 #include "k4DataSource/k4DataConverter.h"
+#include "k4DataSource/k4Parameters.h"
 
 k4DataConverter::k4DataConverter() {}
-
-k4DataConverter::~k4DataConverter() {
-  for (auto& out : outputs_)
-    out.second.collection = nullptr;
-}
 
 void k4DataConverter::feed(const std::vector<void*>& input) {
   if (input.size() != cols_in_.size())
@@ -23,8 +19,8 @@ void k4DataConverter::feed(const std::vector<void*>& input) {
 
 std::unordered_map<std::string, void*> k4DataConverter::extract() const {
   std::unordered_map<std::string, void*> out;
-  for (const auto& var : cols_out_)
-    out[var] = (void*)&outputs_.at(var).collection;
+  for (const auto& output : outputs_)
+    out[output.first] = (void*)&output.second.collection;
   return out;
 }
 

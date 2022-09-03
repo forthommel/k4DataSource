@@ -1,6 +1,7 @@
 #include <TChain.h>
 
 #include "k4DataSource/k4DataConverter.h"
+#include "k4DataSource/k4Parameters.h"
 #include "k4DataSource/k4TreeReader.h"
 
 k4TreeReader::k4TreeReader(const std::string& source, const std::vector<std::string>& filenames)

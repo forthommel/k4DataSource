@@ -5,14 +5,18 @@
 #include <ROOT/RDataSource.hxx>
 #include <unordered_map>
 
+#include "k4DataSource/k4Parameters.h"
 #include "k4DataSource/k4TreeReader.h"
+
+class k4DataConverter;
 
 /// A ROOT RDataSource-derived high level reader
 class k4DataSource final : public ROOT::RDF::RDataSource {
 public:
   explicit k4DataSource(const std::vector<std::string>&, const std::vector<std::string>& = {});
+  explicit k4DataSource(const std::vector<std::string>&, const std::vector<k4DataConverter>&);
 
-  k4DataSource& addSource(const std::string&);
+  k4DataSource& addSource(const k4Parameters&);
 
   bool HasColumn(std::string_view) const override;
   const std::vector<std::string>& GetColumnNames() const override { return column_names_; }
@@ -29,7 +33,7 @@ private:
 
   size_t num_slots_{1};
   bool retrieved_ranges_{false};
-  std::vector<std::string> converters_;
+  std::vector<k4Parameters> converters_;
   std::vector<std::unique_ptr<k4TreeReader> > readers_;
 
   // output source-oriented information
@@ -48,5 +52,6 @@ private:
 };
 
 k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names, const std::vector<std::string>& = {});
+k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names, const std::vector<k4DataConverter>&);
 
 #endif

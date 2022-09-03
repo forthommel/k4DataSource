@@ -1,7 +1,6 @@
 #ifndef k4DataSource_k4DataConverter_h
 #define k4DataSource_k4DataConverter_h
 
-#include <cstring>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -13,10 +12,9 @@ class TClass;
 class k4DataConverter {
 public:
   k4DataConverter();
-  virtual ~k4DataConverter();
 
   /// User-defined collection building
-  virtual void convert() = 0;
+  virtual void convert() {}
 
 protected:
   void throwFailedToConsume(const std::type_info&, const std::string&) const;
@@ -38,7 +36,7 @@ public:
   template <typename T>
   Handle<T> consumes(const std::string& label) {
     cols_in_.emplace_back(label);
-    if (!inputs_.insert(std::make_pair(label, Collection{new T(), typeid(T), sizeof(T), typeid(T).hash_code()})).second)
+    if (!inputs_.insert(std::make_pair(label, Collection{new T(), typeid(T), sizeof(T)})).second)
       throwFailedToConsume(typeid(T), label);
     return Handle<T>(inputs_[label].collection);
   }
@@ -52,7 +50,7 @@ public:
   template <typename T>
   void produces(const std::string& label) {
     cols_out_.emplace_back(label);
-    outputs_.insert(std::make_pair(label, Collection{new T(), typeid(T), sizeof(T), typeid(T).hash_code()}));
+    outputs_.insert(std::make_pair(label, Collection{new T(), typeid(T), sizeof(T)}));
   }
   /// Retrieve a list of output collections provided by this module
   const std::vector<std::string>& outputs() const { return cols_out_; }
@@ -65,12 +63,12 @@ public:
     if (!label.empty()) {
       if (outputs_.count(label) == 0)
         throwFailedToPut(typeid(T), label);
-      std::memcpy(outputs_.at(label).collection, coll.get(), sizeof(T));
+      *static_cast<T*>(outputs_.at(label).collection) = *coll;
       return;
     }
-    for (const auto& output : outputs_)
-      if (output.second.type == typeid(T).hash_code()) {
-        std::memcpy(output.second.collection, coll.get(), sizeof(T));
+    for (auto& output : outputs_)
+      if (output.second.type_info == typeid(T)) {
+        *static_cast<T*>(output.second.collection) = *coll;
         return;
       }
     throwFailedToPut(typeid(T), label);
@@ -87,7 +85,6 @@ private:
     void* collection{nullptr};
     const std::type_info& type_info{typeid(int)};
     size_t size{0ull};
-    size_t type{0ull};
   };
   std::unordered_map<std::string, Collection> inputs_;
   std::unordered_map<std::string, Collection> outputs_;
