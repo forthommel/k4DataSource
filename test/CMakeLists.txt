@@ -19,6 +19,5 @@ foreach(_t ${py_tests})
   add_test(NAME ${test_name} COMMAND python ${_t})
   set_tests_properties(${test_name}
                        PROPERTIES
-                       WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-                       ENVIRONMENT PATH=${CMAKE_INSTALL_PREFIX}/python)
+                       WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 endforeach()
