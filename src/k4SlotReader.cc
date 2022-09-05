@@ -66,9 +66,8 @@ const k4SlotReader::BranchInfo& k4SlotReader::branchInfo(const std::string& bran
 }
 
 bool k4SlotReader::initEntry(unsigned long long event) {
-  if (event < range_.first || event >= range_.second)
-    throw std::runtime_error("Requesting event outside [" + std::to_string(range_.first) + ", " +
-                             std::to_string(range_.second) + "[ range");
+  if (event == current_event_)
+    return true;
   auto ret = chain_->GetEntry(event);
   current_event_ = event;
   for (auto& col : converters_) {

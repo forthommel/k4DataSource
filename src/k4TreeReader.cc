@@ -59,6 +59,7 @@ void k4TreeReader::initSlot(size_t slot, unsigned long long entry) {
                              " created with different number of branches than reference! This may be the sign of a "
                              "nasty memory corruption...");
   branches_ = slots_[slot].branches();
+  slots_.at(slot).initEntry(entry);
 }
 
 bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
