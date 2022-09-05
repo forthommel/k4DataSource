@@ -11,6 +11,8 @@ class Process(object):
     def __init__(self, *args, **kwargs):
         if kwargs.get('implicitMT', True):
             ROOT.EnableImplicitMT()
+        for k, v in kwargs.items():
+            setattr(self, k, v)
         pass
 
     def __setattr__(self, attr_name, attr_value):
@@ -25,7 +27,8 @@ class Process(object):
     def makeDF(self, inputs):
         sources = []
         for k, v in self.sources.items():
-            sources.append(v.set[str]('output', k))
+            output = v.get[str]('output')
+            sources.append(v.set[str]('output', output if output else k))
         self.df = ROOT.MakeK4DataFrame(inputs, sources)
         return self.df
 
