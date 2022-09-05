@@ -5,12 +5,10 @@ _ds = ROOT.k4DataSource
 
 class Process(object):
     df = None
-    inputs = []
     sources = dict()
     outputBranches = ROOT.std.vector('string')()
 
     def __init__(self, *args, **kwargs):
-        self.inputs = kwargs.get('inputs', [])
         if kwargs.get('implicitMT', True):
             ROOT.EnableImplicitMT()
         pass
@@ -24,11 +22,11 @@ class Process(object):
         else:
             return super(Process, self).__setattr__(attr_name, attr_value)
 
-    def df(self):
+    def makeDF(self, inputs):
         sources = []
         for k, v in self.sources.items():
             sources.append(v.set[str]('output', k))
-        self.df = ROOT.MakeK4DataFrame(self.inputs, sources)
+        self.df = ROOT.MakeK4DataFrame(inputs, sources)
         return self.df
 
 def Converter(name, **kwargs):
