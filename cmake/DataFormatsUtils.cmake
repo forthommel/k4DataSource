@@ -9,7 +9,7 @@ macro(build_dataformat name path)
 
   add_library(${lib_name} SHARED ${sources} ${headers} lib${lib_name}.cxx)
   set_target_properties(${lib_name} PROPERTIES LINKER_LANGUAGE CXX)
-  target_link_libraries(${lib_name} ROOT::ROOTDataFrame
+  target_link_libraries(${lib_name} ROOT::MathCore ROOT::ROOTDataFrame
                                     EDM4HEP::edm4hep EDM4HEP::edm4hepDict)
   target_include_directories(${lib_name} PRIVATE ${CMAKE_SOURCE_DIR})
   list(APPEND DATA_FORMATS ${lib_name})
