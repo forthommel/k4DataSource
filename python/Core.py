@@ -7,14 +7,20 @@ class Process(object):
     df = None
     inputs = []
     sources = dict()
+    outputBranches = ROOT.std.vector('string')()
 
     def __init__(self, *args, **kwargs):
         self.inputs = kwargs.get('inputs', [])
+        if kwargs.get('implicitMT', True):
+            ROOT.EnableImplicitMT()
         pass
 
     def __setattr__(self, attr_name, attr_value):
         if type(attr_value) == ROOT.k4Parameters:
             self.sources[attr_name] = attr_value
+        if attr_name == 'output':
+            for out in list(attr_value):
+                self.outputBranches.push_back(out)
         else:
             return super(Process, self).__setattr__(attr_name, attr_value)
 
