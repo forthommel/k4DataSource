@@ -1,6 +1,7 @@
 #include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4DataConverterFactory.h"
 #include "k4DataSource/k4DataSource.h"
+#include "k4DataSource/k4Logger.h"
 
 k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std::vector<std::string>& columns_list) {
   readers_.emplace_back(std::make_unique<k4TreeReader>("events", filenames));
@@ -82,11 +83,11 @@ k4DataSource::Record_t k4DataSource::GetColumnReadersImpl(std::string_view name,
     // input source was found, proceed with this one
     const auto& out = reader->read(br_name, tid);
     if (out.size() != num_slots_)
-      throw std::runtime_error("Expected " + std::to_string(num_slots_) + " value(s) and retrieved " +
-                               std::to_string(out.size()) + " for branch '" + br_name + "'.");
+      throw k4Error << "Expected " << num_slots_ << " value(s) and retrieved " << out.size() << " for branch '"
+                    << br_name << "'.";
     return out;
   }
-  throw std::runtime_error("Failed to read branch name '" + br_name + "' from readers!");
+  throw k4Error << "Failed to read branch name '" << br_name << "' from readers!";
 }
 
 bool k4DataSource::HasColumn(std::string_view col_name) const {
@@ -101,8 +102,8 @@ std::string k4DataSource::GetTypeName(std::string_view type) const {
   for (const auto& reader : readers_)  // browse the input source columns
     if (reader->has(stype))
       return reader->typeName(stype);
-  throw std::runtime_error("Failed to retrieve a collection of type '" + stype +
-                           "', neither in the input file nor in the list of converters.");
+  throw k4Error << "Failed to retrieve a collection of type '" << stype
+                << "', neither in the input file nor in the list of converters.";
 }
 
 k4DataFrameHandler MakeK4DataFrame(const std::vector<std::string>& file_names,

@@ -1,6 +1,7 @@
 #include <TChain.h>
 
 #include "k4DataSource/k4DataConverter.h"
+#include "k4DataSource/k4Logger.h"
 #include "k4DataSource/k4Parameters.h"
 #include "k4DataSource/k4TreeReader.h"
 
@@ -21,15 +22,15 @@ bool k4TreeReader::has(const std::string& name) const {
 
 const std::string& k4TreeReader::typeName(const std::string& name) const {
   if (!has(name))
-    throw std::runtime_error("Input tree does not have branch name '" + name + "'!");
+    throw k4Error << "Input tree does not have branch name '" << name << "'!";
   if (slots_.empty())
-    throw std::runtime_error("Branch type name search requested while number of slots is not yet initialised.");
+    throw k4Error << "Branch type name search requested while number of slots is not yet initialised.";
   return slots_.at(0).branchInfo(name).type;
 }
 
 void k4TreeReader::setNumSlots(size_t num_slots) {
   if (num_slots < 1)
-    throw std::runtime_error("Invalid number of slots: " + std::to_string(num_slots));  // at least one slot is required
+    throw k4Error << "Invalid number of slots: " << num_slots << ".";  // at least one slot is required
   slots_.clear();
   const auto expected_size = num_entries_ / num_slots,
              leftover = num_entries_ % num_slots;  // last remaining events after splitting
@@ -46,23 +47,25 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
 
 void k4TreeReader::initSlot(size_t slot, unsigned long long entry) {
   if (slot >= slots_.size())
-    throw std::runtime_error("Invalid slot index requested:\n  maximal value: " + std::to_string(slots_.size() - 1) +
-                             ",\n  got: " + std::to_string(slot) + ".");
+    throw k4Error << "Invalid slot index requested:\n"
+                  << "  maximal value: " << (slots_.size() - 1) << ",\n"
+                  << "  got: " << slot << ".";
   if (!branches_.empty() && slots_[slot].branches().size() != branches_.size())
-    throw std::runtime_error("Slot " + std::to_string(slot) +
-                             " created with different number of branches than reference! This may be the sign of a "
-                             "nasty memory corruption...");
+    throw k4Error << "Slot " << slot << " created with different number of branches than reference! "
+                  << "This may be the sign of a nasty memory corruption...";
   branches_ = slots_[slot].branches();
   slots_.at(slot).initEntry(entry);
 }
 
 bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
   if (slot >= slots_.size())
-    throw std::runtime_error("Invalid slot index requested:\n  maximal value: " + std::to_string(slots_.size() - 1) +
-                             ",\n  got: " + std::to_string(slot) + ".");
+    throw k4Error << "Invalid slot index requested:\n"
+                  << "  maximal value: " << (slots_.size() - 1) << ",\n"
+                  << "  got: " << slot << ".";
   if (entry >= num_entries_)
-    throw std::runtime_error("Invalid entry requested:\n  maximal value: " + std::to_string(num_entries_ - 1) +
-                             ",\n  got: " + std::to_string(slot) + ".");
+    throw k4Error << "Invalid entry requested:\n"
+                  << "  maximal value: " << (num_entries_ - 1) << ",\n"
+                  << "  got: " << slot << ".";
   return slots_.at(slot).initEntry(entry);
 }
 

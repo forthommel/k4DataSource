@@ -1,8 +1,6 @@
-#include <climits>
-#include <iomanip>
-#include <regex>
-#include <sstream>
+#include <algorithm>
 
+#include "k4DataSource/k4Logger.h"
 #include "k4DataSource/k4Parameters.h"
 
 #define IMPL_TYPE_GET(type, coll, name)                                         \
@@ -274,22 +272,22 @@ std::string k4Parameters::serialise() const {
 
 template <typename T>
 bool k4Parameters::has(const std::string& key) const {
-  throw std::runtime_error("Invalid type for key=" + key + "!");
+  throw k4Error << "Invalid type for key=" << key << "!";
 }
 
 template <typename T>
 T k4Parameters::get(const std::string& key, const T&) const {
-  throw std::runtime_error("Invalid type retrieved for key=" + key + "!");
+  throw k4Error << "Invalid type retrieved for key=" << key << "!";
 }
 
 template <typename T>
 T& k4Parameters::operator[](const std::string& key) {
-  throw std::runtime_error("Invalid type retrieved for key=" + key + "!");
+  throw k4Error << "Invalid type retrieved for key=" << key << "!";
 }
 
 template <typename T>
 k4Parameters& k4Parameters::set(const std::string& key, const T&) {
-  throw std::runtime_error("Invalid type to be set for key=" + key + "!");
+  throw k4Error << "Invalid type to be set for key=" << key << "!";
 }
 
 //------------------------------------------------------------------

@@ -4,6 +4,7 @@
 
 #include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4DataConverterFactory.h"
+#include "k4DataSource/k4Logger.h"
 #include "k4DataSource/k4Parameters.h"
 #include "k4DataSource/k4SlotReader.h"
 
@@ -22,8 +23,8 @@ k4SlotReader::k4SlotReader(const std::string& source,
     auto& branch_info = branches_.at(branch_name);
     auto* type_class = TClass::GetClass(branch_info.type.c_str());
     if (!type_class)
-      throw std::runtime_error("Output format '" + branch_info.type + "' is not defined for branch '" +
-                               branch_info.name + "'. Please generate the readout dictionary accordingly.");
+      throw k4Error << "Output format '" << branch_info.type << "' is not defined for branch '" << branch_info.name
+                    << "'. Please generate the readout dictionary accordingly.";
     auto& addr = branch_info.address;
     chain_->SetBranchAddress(
         // linking pre-booked memory to tree contents
@@ -60,7 +61,7 @@ std::vector<std::string> k4SlotReader::branches() const {
 
 const k4SlotReader::BranchInfo& k4SlotReader::branchInfo(const std::string& branch) const {
   if (branches_.count(branch) == 0)
-    throw std::runtime_error("Failed to retrieve info about branch with name '" + branch + "'.");
+    throw k4Error << "Failed to retrieve info about branch with name '" << branch << "'.";
   return branches_.at(branch);
 }
 
@@ -89,8 +90,8 @@ bool k4SlotReader::initEntry(unsigned long long event) {
 void* k4SlotReader::read(const std::string& name, const std::type_info& tid) const {
   const auto& req_tid = ROOT::Internal::RDF::TypeName2TypeID(branches_.at(name).type);  // NO copy
   if (req_tid != tid)
-    throw std::runtime_error("Invalid type requested for column '" + name + "':\n  expected " + req_tid.name() +
-                             ",\n  got " + tid.name() + ".");
+    throw k4Error << "Invalid type requested for column '" << name << "':\n  expected " << req_tid.name() << ",\n  got "
+                  << tid.name() << ".";
   // first loop over the various converters and spot if one produces the column name
   for (auto& col : converters_) {
     auto& conv = col.second;
@@ -103,10 +104,10 @@ void* k4SlotReader::read(const std::string& name, const std::type_info& tid) con
   // then check if the input tree has the corresponding branch
   if (branches_.count(name) > 0) {
     if (!branches_.at(name).address)
-      throw std::runtime_error("Failed to retrieve branch '" + name + "' from input tree.");
+      throw k4Error << "Failed to retrieve branch '" << name << "' from input tree.";
     return (void*)&branches_.at(name).address;
   }
   // otherwise, throw
-  throw std::runtime_error("Failed to retrieve column '" + name +
-                           "', neither in conversion modules outputs nor in input tree columns.");
+  throw k4Error << "Failed to retrieve column '" << name
+                << "', neither in conversion modules outputs nor in input tree columns.";
 }

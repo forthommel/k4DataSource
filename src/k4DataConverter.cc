@@ -1,18 +1,18 @@
 #include <TClass.h>
 
 #include <ROOT/RDF/Utils.hxx>
-#include <iostream>
-#include <stdexcept>
 
 #include "k4DataSource/k4DataConverter.h"
+#include "k4DataSource/k4Logger.h"
 
 k4DataConverter::k4DataConverter(const k4Parameters& params)
     : conv_name_(params.get<std::string>("output")), params_(params) {}
 
 void k4DataConverter::feed(const std::vector<void*>& input) {
   if (input.size() != cols_in_.size())
-    throw std::runtime_error("Invalid inputs multiplicity:\n  expected: " + std::to_string(cols_in_.size()) +
-                             ",\n  got: " + std::to_string(input.size()) + ".");
+    throw k4Error << "Invalid inputs multiplicity:\n"
+                  << "  expected: " << cols_in_.size() << " (" << cols_in_ << "),\n"
+                  << "  got: " << input.size() << ".";
   for (size_t i = 0; i < cols_in_.size(); ++i)
     std::memcpy(inputs_.at(cols_in_.at(i)).collection, input.at(i), inputs_.at(cols_in_.at(i)).size);
 }
@@ -26,26 +26,29 @@ std::unordered_map<std::string, void*> k4DataConverter::extract() const {
 
 void k4DataConverter::describe() const {
   const auto sep = std::string(60, '=');
-  std::cout << sep << "\nModule with input(s):";
-  for (const auto& mod : inputs_)
-    std::cout << "\n  * " << mod.first << " (" << mod.second.classType()->GetName() << ")";
-  std::cout << "\n"
-            << "and with output(s):";
-  for (const auto& mod : outputs_)
-    std::cout << "\n  * " << mod.first << " (" << mod.second.classType()->GetName() << ")";
-  std::cout << "\n" << sep << std::endl;
+  k4Log.log([&](auto&& log) {
+    log << "\n"
+        << sep << "\n"
+        << "Module with input(s):";
+    for (const auto& mod : inputs_)
+      log << "\n  * " << mod.first << " (" << mod.second.classType()->GetName() << ")";
+    log << "\n"
+        << "and with output(s):";
+    for (const auto& mod : outputs_)
+      log << "\n  * " << mod.first << " (" << mod.second.classType()->GetName() << ")";
+    log << "\n" << sep;
+  });
 }
 
 void k4DataConverter::throwFailedToConsume(const std::type_info& tid, const std::string& label) const {
-  throw std::runtime_error("Failed to consume " +
-                           std::string(TClass::GetClass(ROOT::Internal::RDF::TypeID2TypeName(tid).c_str())->GetName()) +
-                           " collection " + (label.empty() ? "" : "with label '" + label + "'") + " in event record.");
+  throw k4Error << "Failed to consume "
+                << TClass::GetClass(ROOT::Internal::RDF::TypeID2TypeName(tid).c_str())->GetName() << " collection "
+                << (label.empty() ? "" : "with label '" + label + "' ") << "in event record.";
 }
 
 void k4DataConverter::throwFailedToPut(const std::type_info& tid, const std::string& label) const {
-  throw std::runtime_error("Failed to put " +
-                           std::string(TClass::GetClass(ROOT::Internal::RDF::TypeID2TypeName(tid).c_str())->GetName()) +
-                           +" collection " + (label.empty() ? "" : "with label '" + label + "'") + " in event record.");
+  throw k4Error << "Failed to put " << TClass::GetClass(ROOT::Internal::RDF::TypeID2TypeName(tid).c_str())->GetName()
+                << " collection " << (label.empty() ? "" : "with label '" + label + "' ") << "in event record.";
 }
 
 const TClass* k4DataConverter::Collection::classType() const {
