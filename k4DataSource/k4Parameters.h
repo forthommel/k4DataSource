@@ -22,6 +22,7 @@ template <typename T>
 std::string merge(const std::vector<T>& in, const std::string& delim = ",");
 template <typename T>
 std::string merge(const std::vector<std::vector<T> >& in, const std::string& delim = ",");
+std::vector<std::string> split(const std::string&, char delim = ',');
 
 /// Parameters container
 class k4Parameters {

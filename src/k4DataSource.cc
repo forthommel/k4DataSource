@@ -7,18 +7,28 @@ k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std:
   for (const auto& conv : k4DataConverterFactory::get().converters())
     std::cout << "... " << conv << std::endl;
 
-  for (const auto& col : columns_list)
-    addSource(k4Parameters().setName(col));
+  for (const auto& col : columns_list) {
+    const auto outputs_vs_colname = split(col, ':');
+    if (outputs_vs_colname.size() == 1) {
+      addSource(col, k4Parameters().setName(col));
+      continue;
+    }
+    const auto outputs = split(outputs_vs_colname.at(1), ',');
+    const auto params = k4Parameters().setName(outputs_vs_colname.at(0));
+    for (const auto& output : outputs)
+      addSource(output, params);  //FIXME handle case where multiple outputs are created
+  }
 }
 
 k4DataSource::k4DataSource(const std::vector<std::string>& filenames, const std::vector<k4DataConverter>& converters) {
   readers_.emplace_back(std::make_unique<k4TreeReader>("events", filenames));
   for (const auto& converter : converters)
-    addSource(converter.parameters());
+    addSource(converter.name(), converter.parameters());
 }
 
-k4DataSource& k4DataSource::addSource(const k4Parameters& params) {
-  converters_.emplace_back(params);
+k4DataSource& k4DataSource::addSource(const std::string& col_name, const k4Parameters& params) {
+  converters_.emplace_back(
+      k4Parameters(params).set<std::string>("output", col_name));  //FIXME maybe a copy is not needed?
   return *this;
 }
 

@@ -33,6 +33,8 @@ protected:
   };
 
 public:
+  const std::string& name() const { return conv_name_; }
+
   /// Feed the algorithm a set of input values
   void feed(const std::vector<void*>&);
   /// Declare an input collection to be consumed by the algorithm
@@ -51,9 +53,10 @@ public:
   std::unordered_map<std::string, void*> extract() const;
   /// Declare an output collection to be produced by the algorithm
   template <typename T>
-  void produces(const std::string& label) {
-    cols_out_.emplace_back(label);
-    outputs_.insert(std::make_pair(label, Collection{new T(), typeid(T), sizeof(T)}));
+  void produces(const std::string& label = "") {
+    const auto conv_label = (label.empty() ? conv_name_ : label);
+    cols_out_.emplace_back(conv_label);
+    outputs_.insert(std::make_pair(conv_label, Collection{new T(), typeid(T), sizeof(T)}));
   }
   /// Retrieve a list of output collections provided by this module
   const std::vector<std::string>& outputs() const { return cols_out_; }
@@ -80,7 +83,8 @@ public:
   void describe() const;
 
 private:
-  k4Parameters params_;
+  const std::string conv_name_;
+  const k4Parameters params_;
   std::vector<std::string> cols_in_;
   std::vector<std::string> cols_out_;
 

@@ -1,6 +1,7 @@
 #include <climits>
 #include <iomanip>
 #include <regex>
+#include <sstream>
 
 #include "k4DataSource/k4Parameters.h"
 
@@ -367,5 +368,16 @@ std::string merge(const std::vector<k4Parameters>& in, const std::string& delim)
   std::string out;
   for (size_t i = 0; i < in.size(); ++i)
     out += (i > 0 ? delim : "") + in.at(i).serialise();
+  return out;
+}
+
+std::vector<std::string> split(const std::string& in, char delim) {
+  std::vector<std::string> out;
+  if (in.empty())
+    return out;
+  std::string token;
+  std::istringstream iss(in);
+  while (std::getline(iss, token, delim))
+    out.emplace_back(token);
   return out;
 }

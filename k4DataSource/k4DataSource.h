@@ -16,7 +16,7 @@ public:
   explicit k4DataSource(const std::vector<std::string>&, const std::vector<std::string>& = {});
   explicit k4DataSource(const std::vector<std::string>&, const std::vector<k4DataConverter>&);
 
-  k4DataSource& addSource(const k4Parameters&);
+  k4DataSource& addSource(const std::string&, const k4Parameters&);
 
   bool HasColumn(std::string_view) const override;
   const std::vector<std::string>& GetColumnNames() const override { return column_names_; }

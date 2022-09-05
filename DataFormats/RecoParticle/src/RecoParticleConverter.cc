@@ -10,7 +10,7 @@ public:
       : k4DataConverter(params),
         h_reco_parts_(consumes<std::vector<edm4hep::ReconstructedParticleData> >(
             params.get<std::string>("src", "ReconstructedParticles"))) {
-    produces<std::vector<RecoParticle> >(params.get<std::string>("output", "recoParticles"));
+    produces<std::vector<RecoParticle> >();
   }
 
   void convert() override {
