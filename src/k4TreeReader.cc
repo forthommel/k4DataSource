@@ -19,13 +19,6 @@ bool k4TreeReader::has(const std::string& name) const {
   return std::find(branches_.begin(), branches_.end(), name) != branches_.end();
 }
 
-std::vector<k4SlotReader::EventRange> k4TreeReader::ranges() const {
-  std::vector<k4SlotReader::EventRange> out;
-  for (const auto& slot : slots_)
-    out.emplace_back(slot.range());
-  return out;
-}
-
 const std::string& k4TreeReader::typeName(const std::string& name) const {
   if (!has(name))
     throw std::runtime_error("Input tree does not have branch name '" + name + "'!");
@@ -41,11 +34,12 @@ void k4TreeReader::setNumSlots(size_t num_slots) {
   const auto expected_size = num_entries_ / num_slots,
              leftover = num_entries_ % num_slots;  // last remaining events after splitting
   for (size_t i = 0; i < num_slots; ++i) {
-    const auto range = std::make_pair(i * expected_size,                           // beginning of range
-                                      (i + 1) * expected_size                      // end of range
-                                          + (i < num_slots - 1 ? 0ull : leftover)  // last bit gets the remaining events
-    );
-    slots_.emplace_back(source_, filenames_, converters_, range);
+    slots_.emplace_back(source_, filenames_, converters_);
+    ranges_.emplace_back(std::make_pair(
+        i * expected_size,                           // beginning of range
+        (i + 1) * expected_size                      // end of range
+            + (i < num_slots - 1 ? 0ull : leftover)  // last bit gets the remaining events
+        ));
   }
   branches_ = slots_[0].branches();
 }

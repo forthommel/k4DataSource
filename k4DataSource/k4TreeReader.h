@@ -7,6 +7,8 @@ class k4TreeReader {
 public:
   explicit k4TreeReader(const std::string&, const std::vector<std::string>&);
 
+  using EventRange = std::pair<unsigned long long, unsigned long long>;
+
   bool has(const std::string&) const;
   inline void addConverter(const k4Parameters& converter) { converters_.emplace_back(converter); }
   inline const std::vector<std::string>& branches() const { return branches_; }
@@ -18,7 +20,7 @@ public:
   /// \param[in] slot unique slot identifier
   /// \param[in] entry event identifier
   bool initEntry(size_t slot, unsigned long long entry);
-  std::vector<k4SlotReader::EventRange> ranges() const;
+  const std::vector<EventRange>& ranges() const { return ranges_; }
   std::vector<void*> read(const std::string&, const std::type_info&) const;
 
 private:
@@ -30,6 +32,7 @@ private:
 
   /// List of slots booked for the input trees chain readout
   std::vector<k4SlotReader> slots_;
+  std::vector<EventRange> ranges_;
   std::vector<void*> records_;
 };
 

@@ -9,9 +9,8 @@
 
 k4SlotReader::k4SlotReader(const std::string& source,
                            const std::vector<std::string>& filenames,
-                           const std::vector<k4Parameters>& converters,
-                           const EventRange& range)
-    : range_(range), chain_(new TChain(source.c_str())) {
+                           const std::vector<k4Parameters>& converters)
+    : chain_(new TChain(source.c_str())) {
   for (const auto& filename : filenames)
     chain_->Add(filename.c_str());
   for (size_t i = 0; i < chain_->GetListOfBranches()->GetEntries(); ++i) {
