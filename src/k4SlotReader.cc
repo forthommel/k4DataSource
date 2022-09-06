@@ -37,13 +37,12 @@ k4SlotReader::k4SlotReader(const std::string& source,
   }
   for (const auto& converter : converters) {
     auto conv = k4DataConverterFactory::get().build(converter);
-    for (const auto& out_coll : conv->outputs()) {
+    for (const auto& out_coll : conv->outputs())
       branches_.insert(std::make_pair(out_coll,
                                       BranchInfo{false,
                                                  out_coll,
                                                  ROOT::Internal::RDF::TypeID2TypeName(conv->outputType(out_coll)),
                                                  conv->output(out_coll)}));
-    }
     conv->describe();
     converters_[converter.name<std::string>()] = std::move(conv);
   }
