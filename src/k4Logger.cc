@@ -1,3 +1,4 @@
+#include <csignal>
 #include <iostream>
 #include <locale>
 
@@ -23,6 +24,24 @@ std::ostream* k4Logger::stream() {
   return stream_;
 }
 
+k4Logger& k4Logger::enableDebugging(const std::string& rule) {
+  enabled_dbg_.emplace_back(rule);
+  return *this;
+}
+
+bool k4Logger::debuggingEnabled(const std::string& rule) const {
+  if (enabled_dbg_.empty())
+    return false;
+  for (const auto& rule_test : enabled_dbg_)
+    try {
+      if (std::regex_match(rule, rule_test))
+        return true;
+    } catch (const std::regex_error& err) {
+      throw std::runtime_error("Failed to evaluate regex for logging tool.\n\t" + std::string(err.what()));
+    }
+  return false;
+}
+
 std::string k4Logger::now(const std::string& fmt) {
   auto now = std::time(nullptr);
   auto tm = *std::localtime(&now);
@@ -33,11 +52,14 @@ std::string k4Logger::now(const std::string& fmt) {
 
 //---------------------------------------------------------
 
-k4Message::k4Message(const std::string& from, const std::string& file, size_t line_num) noexcept
-    : from_(from), file_(file), line_num_(line_num) {}
+k4Message::k4Message(const k4Message::Type& type,
+                     const std::string& from,
+                     const std::string& file,
+                     size_t line_num) noexcept
+    : type_(type), from_(from), file_(file), line_num_(line_num) {}
 
 k4Message::k4Message(const k4Message& oth) noexcept
-    : from_(oth.from_), file_(oth.file_), line_num_(oth.line_num_), stream_(oth.stream_.str()) {}
+    : type_(oth.type_), from_(oth.from_), file_(oth.file_), line_num_(oth.line_num_), stream_(oth.stream_.str()) {}
 
 k4Message::~k4Message() noexcept { dump(); }
 
@@ -45,8 +67,10 @@ void k4Message::dump(std::ostream* os) const noexcept {
   if (!os)
     os = k4Logger::get().stream();
   std::lock_guard<std::mutex> guard(k4Logger::get().mutex);
-  (*os) << "[" << k4Logger::get().now() << "] " << from_ << " (" << file_ << ":" << line_num_ << ") " << stream_.str()
-        << std::endl;
+  (*os) << "[" << k4Logger::get().now() << "] ";
+  if (type_ == mDebug)
+    (*os) << "DEBUG " << from_ << " (" << file_ << ":" << line_num_ << ") ";
+  (*os) << stream_.str() << std::endl;
 }
 
 std::string k4Message::message() const { return stream_.str(); }
@@ -54,9 +78,15 @@ std::string k4Message::message() const { return stream_.str(); }
 //---------------------------------------------------------
 
 k4Exception::k4Exception(const std::string& from, const std::string& file, size_t line_num) noexcept
-    : k4Message(from, file, line_num), std::runtime_error("k4Exception") {}
+    : k4Message(k4Message::mInfo, from, file, line_num), std::runtime_error("k4Exception") {}
 
-k4Exception::~k4Exception() noexcept {}
+k4Exception::k4Exception(const k4Exception& oth) noexcept : k4Message(oth), std::runtime_error("k4Exception") {}
+
+k4Exception::~k4Exception() noexcept {
+  dump();
+  if (raise(SIGINT) != 0)
+    exit(0);
+}
 
 const char* k4Exception::what() const noexcept {
   dump();
