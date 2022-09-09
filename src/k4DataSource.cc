@@ -1,3 +1,5 @@
+#include <podio/ROOTFrameReader.h>
+
 #include "k4DataSource/k4DataConverter.h"
 #include "k4DataSource/k4DataConverterFactory.h"
 #include "k4DataSource/k4DataSource.h"

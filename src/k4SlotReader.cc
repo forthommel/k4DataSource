@@ -11,10 +11,22 @@
 k4SlotReader::k4SlotReader(const std::string& source,
                            const std::vector<std::string>& filenames,
                            const std::vector<k4Parameters>& converters)
-    : chain_(new TChain(source.c_str())) {
-  for (const auto& filename : filenames)
-    chain_->Add(filename.c_str());
-  for (size_t i = 0; i < chain_->GetListOfBranches()->GetEntries(); ++i) {
+    : source_(source), reader_(new podio::ROOTFrameReader) {
+  if (filenames.empty())
+    throw k4Error << "At least one filename should be provided.";
+  {
+    // define an instance to read branches names
+    auto frame_reader = std::make_unique<podio::ROOTFrameReader>();
+    frame_reader->openFile(filenames.at(0));
+    auto entry_data = frame_reader->readNextEntry(source_);
+    for (const auto& cat : entry_data->getAvailableCollections())
+      branches_.insert(std::make_pair(cat, BranchInfo{true, cat, {}}));
+    const auto& id_table = entry_data->getIDTable();
+    k4Log << id_table.ids();
+    k4Log << id_table.names();
+  }
+  reader_->openFiles(filenames);
+  /*for (size_t i = 0; i < chain_->GetListOfBranches()->GetEntries(); ++i) {
     const std::string branch_name = chain_->GetListOfBranches()->At(i)->GetName();
     const auto type_name =
         ROOT::Internal::RDF::ColumnName2ColumnTypeName(branch_name, chain_.get(), nullptr, nullptr, false);
@@ -45,7 +57,7 @@ k4SlotReader::k4SlotReader(const std::string& source,
                                                  conv->output(out_coll)}));
     conv->describe();
     converters_[converter.name<std::string>()] = std::move(conv);
-  }
+  }*/
 }
 
 std::vector<std::string> k4SlotReader::branches() const {
@@ -67,7 +79,7 @@ const k4SlotReader::BranchInfo& k4SlotReader::branchInfo(const std::string& bran
 bool k4SlotReader::initEntry(unsigned long long event) {
   if (event == current_event_)
     return true;
-  auto ret = chain_->GetEntry(event);
+  /*auto ret = chain_->GetEntry(event);
   current_event_ = event;
   for (auto& col : converters_) {
     auto& conv = col.second;
@@ -83,11 +95,22 @@ bool k4SlotReader::initEntry(unsigned long long event) {
     conv->feed(inputs);
     conv->convert();
   }
-  return ret > 0;
+  return ret > 0;*/
+  entry_data_ = std::move(reader_->readNextEntry(source_));
+  if (!entry_data_)
+    return false;
+  for (const auto& cat : entry_data_->getAvailableCollections()) {
+    if (!entry_data_->getCollectionBuffers(cat))
+      continue;
+    branches_.at(cat).buffer = std::move(entry_data_->getCollectionBuffers(cat));
+    k4Log << cat;
+  }
+
+  return true;
 }
 
 void* k4SlotReader::read(const std::string& name, const std::type_info& tid) const {
-  const auto& req_tid = ROOT::Internal::RDF::TypeName2TypeID(branches_.at(name).type);  // NO copy
+  const auto& req_tid = typeid(branches_.at(name).buffer.value());
   if (req_tid != tid)
     throw k4Error << "Invalid type requested for column '" << name << "':\n  expected " << req_tid.name() << ",\n  got "
                   << tid.name() << ".";
@@ -102,9 +125,6 @@ void* k4SlotReader::read(const std::string& name, const std::type_info& tid) con
   }
   // then check if the input tree has the corresponding branch
   if (branches_.count(name) > 0) {
-    if (!branches_.at(name).address)
-      throw k4Error << "Failed to retrieve branch '" << name << "' from input tree.";
-    return (void*)&branches_.at(name).address;
   }
   // otherwise, throw
   throw k4Error << "Failed to retrieve column '" << name

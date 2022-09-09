@@ -10,9 +10,6 @@ k4TreeReader::k4TreeReader(const std::string& source, const std::vector<std::str
   TChain chain_model(source.c_str());
   for (const auto& filename : filenames_)
     chain_model.Add(filename.c_str());
-  const auto* branches = chain_model.GetListOfBranches();
-  for (size_t i = 0; i < branches->GetEntries(); ++i)
-    branches_.emplace_back(branches->At(i)->GetName());
   num_entries_ = chain_model.GetEntries();
 }
 
@@ -25,7 +22,7 @@ const std::string& k4TreeReader::typeName(const std::string& name) const {
     throw k4Error << "Input tree does not have branch name '" << name << "'!";
   if (slots_.empty())
     throw k4Error << "Branch type name search requested while number of slots is not yet initialised.";
-  return slots_.at(0).branchInfo(name).type;
+  return "";  //FIXME
 }
 
 void k4TreeReader::setNumSlots(size_t num_slots) {

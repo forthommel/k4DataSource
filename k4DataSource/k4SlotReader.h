@@ -5,7 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
-class TChain;
+#include "podio/CollectionBuffers.h"
+#include "podio/ROOTFrameReader.h"
+
 class k4DataConverter;
 class k4Parameters;
 
@@ -16,10 +18,10 @@ public:
 
   /// Metadata and memory accessor for all branches
   struct BranchInfo {
-    bool in_tree{false};     ///< Is the branch collected from the tree or produced by a converter?
-    std::string name;        ///< Branch name
-    std::string type;        ///< Human-readable branch content type
-    void* address{nullptr};  ///< Branch address
+    bool in_tree{false};  ///< Is the branch collected from the tree or produced by a converter?
+    std::string name;     ///< Branch name
+    std::string type;     ///< Branch type
+    std::optional<podio::CollectionReadBuffers> buffer;  ///< Input buffer
   };
 
   /// List of branch names
@@ -30,7 +32,10 @@ public:
   void* read(const std::string&, const std::type_info&) const;
 
 private:
-  std::unique_ptr<TChain> chain_;                         ///< Readout chain for tree collection
+  const std::string source_;
+  std::unique_ptr<podio::ROOTFrameReader> reader_;  ///< Readout chain for tree collection
+  std::unique_ptr<podio::ROOTFrameData> entry_data_;
+
   std::unordered_map<std::string, BranchInfo> branches_;  ///< Branches memory booking and metadata
   /// Data collections converters
   std::unordered_map<std::string, std::unique_ptr<k4DataConverter> > converters_;

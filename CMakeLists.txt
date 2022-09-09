@@ -19,7 +19,10 @@ set(INSTALL_INCLUDE_DIR include CACHE PATH
   "Installation directory for header files")
 
 find_package(ROOT COMPONENTS ROOTVecOps ROOTDataFrame REQUIRED)
+find_package(podio REQUIRED PATHS $ENV{PODIO_PATH} $ENV{PODIO_PATH}/install NO_DEFAULT_PATH)
 find_package(EDM4HEP REQUIRED)
+
+include_directories(${podio_INCLUDE_DIR})
 
 file(GLOB sources ${CMAKE_SOURCE_DIR}/src/*.cc)
 file(GLOB headers ${CMAKE_SOURCE_DIR}/k4DataSource/*.h)
@@ -39,6 +42,7 @@ message(STATUS ${DATA_FORMATS})
 add_library(k4DataSource SHARED ${sources} ${headers} libk4DataSource.cxx)
 target_include_directories(k4DataSource PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(k4DataSource ROOT::ROOTDataFrame
+                                   podio::podio podio::podioRootIO
                                    EDM4HEP::edm4hep EDM4HEP::edm4hepDict
                                    ${DATA_FORMATS})
 set_target_properties(k4DataSource PROPERTIES PUBLIC_HEADER "${headers}")
