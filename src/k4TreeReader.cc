@@ -22,7 +22,7 @@ const std::string& k4TreeReader::typeName(const std::string& name) const {
     throw k4Error << "Input tree does not have branch name '" << name << "'!";
   if (slots_.empty())
     throw k4Error << "Branch type name search requested while number of slots is not yet initialised.";
-  return "";  //FIXME
+  return slots_.at(0).branchInfo(name).type;
 }
 
 void k4TreeReader::setNumSlots(size_t num_slots) {
@@ -68,7 +68,11 @@ bool k4TreeReader::initEntry(size_t slot, unsigned long long entry) {
 
 std::vector<void*> k4TreeReader::read(const std::string& name, const std::type_info& tid) const {
   std::vector<void*> output;
-  for (size_t i = 0; i < slots_.size(); ++i)
-    output.emplace_back(slots_.at(i).read(name, tid));
+  for (size_t i = 0; i < slots_.size(); ++i) {
+    const auto& vals = slots_.at(i).read(name, tid);
+    if (!vals)
+      throw k4Error << "Failed to retrieve value of slot " << i << " for variable name '" << name << "'.";
+    output.emplace_back(vals.value().data);
+  }
   return output;
 }

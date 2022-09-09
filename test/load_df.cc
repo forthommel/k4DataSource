@@ -12,7 +12,7 @@ TEST_CASE("k4DataFrame", "[basics]") {
                             std::vector<std::string>{})
                 ->Range(0, 1000);
   //df.Snapshot("events", "test.root", {"recoParticles", "jets"});
-  df.Snapshot("events", "test.root", {});
+  df.Snapshot("events", "test.root", {"mcparticles"});
 }
 
 /*TEST_CASE("k4DataFrameMT", "[basics]") {

@@ -8,19 +8,19 @@
 k4DataConverter::k4DataConverter(const k4Parameters& params)
     : conv_name_(params.get<std::string>("output")), params_(params) {}
 
-void k4DataConverter::feed(const std::vector<void*>& input) {
+void k4DataConverter::feed(const std::vector<podio::CollectionReadBuffers>& input) {
   if (input.size() != cols_in_.size())
     throw k4Error << "Invalid inputs multiplicity:\n"
                   << "  expected: " << cols_in_.size() << " (" << cols_in_ << "),\n"
                   << "  got: " << input.size() << ".";
   for (size_t i = 0; i < cols_in_.size(); ++i)
-    std::memcpy(inputs_.at(cols_in_.at(i)).collection, input.at(i), inputs_.at(cols_in_.at(i)).size);
+    std::memcpy(inputs_.at(cols_in_.at(i)).collection.data, input.at(i).data, inputs_.at(cols_in_.at(i)).size);
 }
 
-std::unordered_map<std::string, void*> k4DataConverter::extract() const {
-  std::unordered_map<std::string, void*> out;
-  for (const auto& output : outputs_)
-    out[output.first] = (void*)&output.second.collection;
+std::unordered_map<std::string, podio::CollectionWriteBuffers> k4DataConverter::extract() const {
+  std::unordered_map<std::string, podio::CollectionWriteBuffers> out;
+  for (const auto& coll : outputs_)
+    out[coll.first] = coll.second.collection;
   return out;
 }
 

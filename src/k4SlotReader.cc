@@ -17,13 +17,23 @@ k4SlotReader::k4SlotReader(const std::string& source,
   {
     // define an instance to read branches names
     auto frame_reader = std::make_unique<podio::ROOTFrameReader>();
-    frame_reader->openFile(filenames.at(0));
+    frame_reader->openFiles(filenames);
     auto entry_data = frame_reader->readNextEntry(source_);
-    for (const auto& cat : entry_data->getAvailableCollections())
-      branches_.insert(std::make_pair(cat, BranchInfo{true, cat, {}}));
-    const auto& id_table = entry_data->getIDTable();
-    k4Log << id_table.ids();
-    k4Log << id_table.names();
+    auto classes_data = frame_reader->storedClasses(source_);
+    for (const auto& cat : entry_data->getAvailableCollections()) {
+      if (classes_data.count(cat) == 0) {
+        k4Log << "Failed to retrieve class data for collection '" << cat << "'.";
+        continue;
+      }
+      const auto* class_info = std::get<0>(classes_data.at(cat));
+      if (!class_info) {
+        k4Log << "Failed to retrieve TClass object for collection '" << cat << "'.";
+        continue;
+      }
+      branches_.insert(std::make_pair(cat, BranchInfo{true, cat, class_info->GetName(), {}}));
+      k4Log << "Inserted a new branch with name '" << cat << "' and type '" << class_info->GetName()
+            << "' from podio ROOT frame reader.";
+    }
   }
   reader_->openFiles(filenames);
   /*for (size_t i = 0; i < chain_->GetListOfBranches()->GetEntries(); ++i) {
@@ -100,16 +110,18 @@ bool k4SlotReader::initEntry(unsigned long long event) {
   if (!entry_data_)
     return false;
   for (const auto& cat : entry_data_->getAvailableCollections()) {
-    if (!entry_data_->getCollectionBuffers(cat))
+    auto buff = entry_data_->getCollectionBuffers(cat);
+    if (!buff)
       continue;
-    branches_.at(cat).buffer = std::move(entry_data_->getCollectionBuffers(cat));
+    branches_.at(cat).buffer = std::move(buff);
     k4Log << cat;
   }
 
   return true;
 }
 
-void* k4SlotReader::read(const std::string& name, const std::type_info& tid) const {
+std::optional<podio::CollectionReadBuffers> k4SlotReader::read(const std::string& name,
+                                                               const std::type_info& tid) const {
   const auto& req_tid = typeid(branches_.at(name).buffer.value());
   if (req_tid != tid)
     throw k4Error << "Invalid type requested for column '" << name << "':\n  expected " << req_tid.name() << ",\n  got "
@@ -124,8 +136,8 @@ void* k4SlotReader::read(const std::string& name, const std::type_info& tid) con
     return conv->extract().at(name);
   }
   // then check if the input tree has the corresponding branch
-  if (branches_.count(name) > 0) {
-  }
+  if (branches_.count(name) > 0)
+    return branches_.at(name).buffer;
   // otherwise, throw
   throw k4Error << "Failed to retrieve column '" << name
                 << "', neither in conversion modules outputs nor in input tree columns.";

@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "podio/CollectionBuffers.h"
 #include "podio/ROOTFrameReader.h"
 
 class k4DataConverter;
@@ -29,7 +28,7 @@ public:
   const BranchInfo& branchInfo(const std::string&) const;
 
   bool initEntry(unsigned long long);
-  void* read(const std::string&, const std::type_info&) const;
+  std::optional<podio::CollectionReadBuffers> read(const std::string&, const std::type_info&) const;
 
 private:
   const std::string source_;
