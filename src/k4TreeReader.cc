@@ -17,12 +17,12 @@ bool k4TreeReader::has(const std::string& name) const {
   return std::find(branches_.begin(), branches_.end(), name) != branches_.end();
 }
 
-const std::string& k4TreeReader::typeName(const std::string& name) const {
+std::string k4TreeReader::typeName(const std::string& name) const {
   if (!has(name))
     throw k4Error << "Input tree does not have branch name '" << name << "'!";
   if (slots_.empty())
     throw k4Error << "Branch type name search requested while number of slots is not yet initialised.";
-  return slots_.at(0).branchInfo(name).type;
+  return slots_.at(0).branchInfo(name).type->GetName();
 }
 
 void k4TreeReader::setNumSlots(size_t num_slots) {

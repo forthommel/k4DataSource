@@ -12,7 +12,7 @@ public:
   bool has(const std::string&) const;
   inline void addConverter(const k4Parameters& converter) { converters_.emplace_back(converter); }
   inline const std::vector<std::string>& branches() const { return branches_; }
-  const std::string& typeName(const std::string&) const;
+  std::string typeName(const std::string&) const;
 
   void setNumSlots(size_t);
   void initSlot(size_t, unsigned long long);

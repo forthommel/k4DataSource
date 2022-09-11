@@ -17,9 +17,9 @@ public:
 
   /// Metadata and memory accessor for all branches
   struct BranchInfo {
-    bool in_tree{false};  ///< Is the branch collected from the tree or produced by a converter?
-    std::string name;     ///< Branch name
-    std::string type;     ///< Branch type
+    bool in_tree{false};          ///< Is the branch collected from the tree or produced by a converter?
+    std::string name;             ///< Branch name
+    const TClass* type{nullptr};  ///< Branch type
     std::optional<podio::CollectionReadBuffers> buffer;  ///< Input buffer
   };
 
