@@ -88,6 +88,30 @@ k4Exception::~k4Exception() noexcept {
     exit(0);
 }
 
+void k4Exception::dump(std::ostream* os) const noexcept {
+  if (!os)
+    os = k4Logger::get().stream();
+  std::lock_guard<std::mutex> guard(k4Logger::get().mutex);
+  static const std::string separator(80, '-');
+  (*os) << separator << "\n"
+        << "[" << k4Logger::get().now() << "] "
+        << "ERROR\n"
+        << stream_.str() << "\n"
+        << separator << "\n";
+  if (from_.empty() && file_.empty())
+    return;
+  if (!from_.empty())
+    (*os) << "Encountered from:\n"
+          << "  " << from_ << "\n";
+  if (!file_.empty()) {
+    (*os) << "File: " << file_;
+    if (line_num_ >= 0)
+      (*os) << " at line " << line_num_;
+    (*os) << "\n";
+  }
+  (*os) << separator << "\n";
+}
+
 const char* k4Exception::what() const noexcept {
   dump();
   return "k4Exception";

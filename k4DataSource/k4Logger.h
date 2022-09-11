@@ -43,7 +43,7 @@ public:
   k4Message(const k4Message&) noexcept;
   virtual ~k4Message() noexcept;
 
-  void dump(std::ostream* = nullptr) const noexcept;
+  virtual void dump(std::ostream* = nullptr) const noexcept;
   std::string message() const;
 
   template <typename T>
@@ -118,10 +118,11 @@ struct k4Exception : public k4Message, public std::runtime_error {
 
   template <typename T>
   inline friend const k4Exception& operator<<(const k4Exception& exc, const T& var) noexcept {
-    (const k4Exception&)exc << var;
+    (const k4Message&)exc << var;
     return exc;
   }
 
+  void dump(std::ostream* = nullptr) const noexcept override;
   const char* what() const noexcept override;
 };
 
